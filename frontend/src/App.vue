@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-100 p-8">
     <div class="max-w-4xl mx-auto space-y-8">
       <!-- 标题 -->
-      <h1 class="text-3xl font-bold text-gray-800 text-center mb-8">图片采集处理工具</h1>
+      <h1 class="text-3xl font-bold text-gray-800 text-center mb-8">微信公众号「图片/文字」采集工具</h1>
 
       <!-- 功能区1：URL采集 -->
       <div class="bg-white rounded-lg shadow-md p-6">
@@ -15,7 +15,7 @@
               v-model="urls"
               rows="4"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="请输入URL地址，每行一个"
+              :placeholder="urlInputPlaceholder"
             ></textarea>
           </div>
 
@@ -153,7 +153,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import {GetPreferenceInfo} from "../wailsjs/go/handlers/User.js"
+import {LogPrint} from "../wailsjs/runtime/runtime.js"
 
 // 状态变量
 const urls = ref('')
@@ -167,6 +169,23 @@ const cropHeight = ref(20)
 const isCrawling = ref(false)
 const isCropping = ref(false)
 const isShuffling = ref(false)
+
+const urlInputPlaceholder = '请输入微信“小绿书”URL地址，每行一个。例如： \n' +
+    'https://mp.weixin.qq.com/s/oCpFfUCtIYd9oAGsuDi6BA\n' +
+    'https://mp.weixin.qq.com/s/hQf0N8P4vaaCaxt8OFzwfw\n'
+
+onMounted(() => {
+  // 获取用户偏好设置
+  GetPreferenceInfo().then((res) => {
+    if (res) {
+      // 设置默认值
+      timeout.value = res.download_timeout || 15
+      cropHeight.value = res.crop_img_bottom_pixel || 20
+      savePath.value = res.save_img_path || ''
+      console.log(res)
+    }
+  })
+})
 
 // 输入处理函数
 const handleTimeoutInput = (event) => {
@@ -221,6 +240,17 @@ const selectSavePath = () => {
 const startCrawling = () => {
   isCrawling.value = true
   // TODO: 实现图片采集逻辑
+  // 模拟进度条更新
+  const interval = setInterval(() => {
+    if (progress.value >= 100) {
+      clearInterval(interval)
+      isCrawling.value = false
+      progress.value = 0
+    } else {
+      progress.value += 10
+    }
+  }, timeout.value * 1000)
+
 }
 
 const startCropping = () => {

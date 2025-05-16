@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -16,10 +17,13 @@ func NewApp() *App {
 	return &App{}
 }
 
+func (a *App) setContext(ctx context.Context) {
+	a.ctx = ctx
+}
+
 // startup is called when the app starts. The context is saved
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
 	runtime.LogInfo(ctx, "项目启动成功")
 }
 
@@ -49,4 +53,15 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 	prevent = "确定退出" != dialog
 
 	return
+}
+
+// 设置一些参数选项 https://wails.io/zh-Hans/docs/reference/options
+func (a *App) macOptions() *mac.Options {
+	return &mac.Options{
+		About: &mac.AboutInfo{
+			Title:   "wxGraphCrawler",
+			Message: "专用于抓取微信公众号“图片/文字”类型（俗称：小绿书）中的图片小工具 \r\n @Copyright 2025 by Alex",
+			Icon:    nil,
+		},
+	}
 }
