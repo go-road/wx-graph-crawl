@@ -2,7 +2,9 @@
   <div class="min-h-screen bg-gray-100 p-8">
     <div class="max-w-4xl mx-auto space-y-8">
       <!-- 标题 -->
-      <h1 class="text-3xl font-bold text-gray-800 text-center mb-8">微信公众号「图片/文字」采集工具</h1>
+      <div class="text-center space-y-2">
+        <h1 class="text-3xl font-bold text-gray-800">微信公众号「图片/文字」采集工具</h1>
+      </div>
 
       <!-- 功能区1：URL采集 -->
       <div class="bg-white rounded-lg shadow-md p-6">
@@ -10,25 +12,34 @@
         <div class="space-y-4">
           <!-- URL输入区域 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">URL地址列表（每行一个，最多50个）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL地址列表（一个URL一行，最多50个）</label>
             <textarea
               v-model="urls"
               rows="4"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm placeholder:text-sm resize-none"
               :placeholder="urlInputPlaceholder"
             ></textarea>
           </div>
 
           <!-- 文件选择和保存路径区域 -->
           <div class="space-y-3">
-            <div class="flex items-center space-x-4">
-              <button
-                @click="selectFile"
-                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                选择文件
-              </button>
+            <div class="flex items-start space-x-4">
+              <div class="flex-shrink-0">
+                <button
+                  @click="selectFile"
+                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  选择文件
+                </button>
+              </div>
               <div class="flex-1">
+                <div class="text-sm text-gray-600 mb-2">
+                  <p class="font-medium">文件导入说明：</p>
+                  <ol class="list-decimal list-inside space-y-1 mt-1">
+                    <li>也可通过读取文件来输入URL地址</li>
+                    <li>仅支持 .txt 文件，且一行一个URL地址</li>
+                  </ol>
+                </div>
                 <div v-if="selectedFilePath" class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
                   <span class="font-medium">已选择文件：</span>
                   <span class="text-blue-600 break-all">{{ selectedFilePath }}</span>
@@ -44,7 +55,7 @@
                 @click="selectSavePath"
                 class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
-                选择保存路径
+                选择图片下载路径
               </button>
               <div class="flex-1">
                 <div v-if="savePath" class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
@@ -61,7 +72,7 @@
           <!-- 超时时间和开始采集按钮 -->
           <div class="flex items-center space-x-4">
             <div class="flex items-center">
-              <label class="text-sm text-gray-700 mr-2">超时时间（秒）：</label>
+              <label class="text-sm text-gray-700 mr-2">图片下载超时时间（秒）：</label>
               <input
                 type="number"
                 v-model="timeout"
@@ -170,7 +181,8 @@ const isCrawling = ref(false)
 const isCropping = ref(false)
 const isShuffling = ref(false)
 
-const urlInputPlaceholder = '请输入微信“小绿书”URL地址，每行一个。例如： \n' +
+const urlInputPlaceholder = '请输入微信"小绿书"URL地址，一行一个，' +
+    '例如：\n' +
     'https://mp.weixin.qq.com/s/oCpFfUCtIYd9oAGsuDi6BA\n' +
     'https://mp.weixin.qq.com/s/hQf0N8P4vaaCaxt8OFzwfw\n'
 
