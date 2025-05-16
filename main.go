@@ -41,23 +41,18 @@ func main() {
 
 			// 将应用启动时的上下文传递给业务逻辑（方便在业务逻辑代码中使用运行时函数）
 			backendBoot.SetContext(ctx)
+
 		}, // 创建窗口并即将开始加载前端资源时的回调
 		OnShutdown:    app.shutdown,     // 应用程序即将退出时的回调
 		OnBeforeClose: app.beforeClose,  // 应用关闭前的回调
 		Mac:           app.macOptions(), // macOS特定的选项
-		Bind: []interface{}{ // 我们希望向前端暴露的一部分结构体实例
+		Bind: append([]interface{}{ // 我们希望向前端暴露的一部分结构体实例
 			app,
-		},
-	}
-
-	// 将业务逻辑中的方法绑定到前端
-	for _, handlerBind := range backendBoot.Binds() {
-		wailsOptions.Bind = append(wailsOptions.Bind, handlerBind)
+		}, backendBoot.Binds()...), // 动态绑定所有 handler
 	}
 
 	// Create application with options
 	if err := wails.Run(wailsOptions); err != nil {
 		log.Fatalf("Wails run error: %+v \n", err)
 	}
-
 }

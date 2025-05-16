@@ -166,7 +166,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import {GetPreferenceInfo} from "../wailsjs/go/handlers/User.js"
-import {LogPrint} from "../wailsjs/runtime/runtime.js"
+import {SelectFile, SelectDirectory} from "../wailsjs/go/handlers/FileHandler.js"
+import {LogPrint,LogError} from "../wailsjs/runtime/runtime.js"
 
 // 状态变量
 const urls = ref('')
@@ -240,13 +241,43 @@ const handleCropHeightInput = (event) => {
   }
 }
 
-// 方法
-const selectFile = () => {
-  // TODO: 实现文件选择逻辑
+const selectFile = async () => {
+  try {
+    const res = await SelectFile()
+    console.log("选择文件 --->", res)
+    
+    if (res && res.length === 3) {
+      const [filePath, validUrls, err] = res
+      if (err) {
+        throw new Error(err)
+      }
+      
+      if (filePath) {
+        selectedFilePath.value = filePath
+        if (validUrls && validUrls.length > 0) {
+          urls.value = validUrls.join('\n')
+        } else {
+          urls.value = ''
+        }
+      }
+    } else {
+      throw new Error('返回数据格式不正确')
+    }
+  } catch (error) {
+    console.error('选择文件失败:', error)
+  }
 }
 
-const selectSavePath = () => {
-  // TODO: 实现保存路径选择逻辑
+const selectSavePath = async () => {
+  try {
+    const dirPath = await SelectDirectory();
+    console.log("选择保存路径 --->", dirPath)
+    if (dirPath) {
+      savePath.value = dirPath
+    }
+  } catch (e) {
+    console.error("选择保存路径失败", e)
+  }
 }
 
 const startCrawling = () => {
