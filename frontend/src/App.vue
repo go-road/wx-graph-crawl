@@ -1,21 +1,12 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'</script>
+
 
 <template>
-  <img id="logo" alt="Wails logo" src="./assets/images/logo-universal.png"/>
-  <HelloWorld/>
+  <h1 class="text-6xl font-bold underline text-center">你好啊👋</h1>
 </template>
 
+<script setup>
+</script>
+
 <style>
-#logo {
-  display: block;
-  width: 50%;
-  height: 50%;
-  margin: auto;
-  padding: 10% 0 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-origin: content-box;
-}
+
 </style>
