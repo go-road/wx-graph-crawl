@@ -67,6 +67,7 @@
                 v-model="timeout"
                 min="1"
                 max="50"
+                @input="handleTimeoutInput"
                 class="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -117,6 +118,7 @@
                   v-model="cropHeight"
                   min="1"
                   max="500"
+                  @input="handleCropHeightInput"
                   class="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -165,6 +167,47 @@ const cropHeight = ref(20)
 const isCrawling = ref(false)
 const isCropping = ref(false)
 const isShuffling = ref(false)
+
+// 输入处理函数
+const handleTimeoutInput = (event) => {
+  const value = event.target.value
+  if (value === '') {
+    timeout.value = 15 // 默认值
+    return
+  }
+  const num = parseInt(value)
+  if (isNaN(num)) {
+    timeout.value = 15 // 默认值
+    return
+  }
+  if (num < 1) {
+    timeout.value = 1
+  } else if (num > 50) {
+    timeout.value = 50
+  } else {
+    timeout.value = num
+  }
+}
+
+const handleCropHeightInput = (event) => {
+  const value = event.target.value
+  if (value === '') {
+    cropHeight.value = 20 // 默认值
+    return
+  }
+  const num = parseInt(value)
+  if (isNaN(num)) {
+    cropHeight.value = 20 // 默认值
+    return
+  }
+  if (num < 1) {
+    cropHeight.value = 1
+  } else if (num > 500) {
+    cropHeight.value = 500
+  } else {
+    cropHeight.value = num
+  }
+}
 
 // 方法
 const selectFile = () => {
