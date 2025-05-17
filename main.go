@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/pudongping/wx-graph-crawl/backend"
+	"github.com/pudongping/wx-graph-crawl/backend/bootstrap"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -18,6 +19,10 @@ var assets embed.FS
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
+
+	// Initialize the backend
+	zapLogger := bootstrap.InitZapLog()
+	defer zapLogger.Sync()
 
 	// 业务
 	backendBoot := backend.NewBoot()
