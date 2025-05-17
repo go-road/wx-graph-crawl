@@ -8,11 +8,11 @@
 
       <!-- 功能区1：URL采集 -->
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">URL图片采集</h2>
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">URL 图片采集</h2>
         <div class="space-y-4">
           <!-- URL输入区域 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">URL地址列表（一个URL一行，最多50个）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL 地址列表（一行一个 URL，最多 {{maxDownloadURLCount}} 个）</label>
             <textarea
               v-model="urls"
               rows="4"
@@ -36,8 +36,8 @@
                 <div class="text-sm text-gray-600 mb-2">
                   <p class="font-medium">文件导入说明：</p>
                   <ol class="list-decimal list-inside space-y-1 mt-1">
-                    <li>也可通过读取文件来输入URL地址</li>
-                    <li>仅支持 .txt 文件，且一行一个URL地址</li>
+                    <li>也可通过选择文件来自动输入 URL 地址</li>
+                    <li>仅支持 .txt 文件，且一行一个 URL 地址</li>
                   </ol>
                 </div>
                 <div v-if="selectedFilePath" class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
@@ -55,7 +55,7 @@
                 @click="selectSavePath"
                 class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
-                选择图片下载路径
+                选择图片保存路径
               </button>
               <div class="flex-1">
                 <div v-if="savePath" class="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
@@ -167,7 +167,11 @@
 import { ref, onMounted } from 'vue'
 import {GetPreferenceInfo} from "../wailsjs/go/handlers/User.js"
 import {SelectFile, SelectDirectory} from "../wailsjs/go/handlers/FileHandler.js"
-import {LogPrint,LogError} from "../wailsjs/runtime/runtime.js"
+import { ElNotification, ElMessage } from 'element-plus'
+
+const maxDownloadURLCount = 50 // 最大下载URL数量
+const defaultDownloadTimeout = 15 // 默认下载超时时间（秒）
+const defaultCropHeight = 20 // 默认裁剪高度（像素）
 
 // 状态变量
 const urls = ref('')
@@ -182,7 +186,7 @@ const isCrawling = ref(false)
 const isCropping = ref(false)
 const isShuffling = ref(false)
 
-const urlInputPlaceholder = '请输入微信"小绿书"URL地址，一行一个，' +
+const urlInputPlaceholder = '请输入微信"小绿书" URL 地址，一行一个，' +
     '例如：\n' +
     'https://mp.weixin.qq.com/s/oCpFfUCtIYd9oAGsuDi6BA\n' +
     'https://mp.weixin.qq.com/s/hQf0N8P4vaaCaxt8OFzwfw\n'
@@ -250,10 +254,19 @@ const selectFile = async () => {
         urls.value = validUrls.join('\n')
       } else {
         urls.value = ''
+        ElNotification.warning({
+          title: '文件内容为空',
+          message: '导入的文件中没有有效的小绿书URL地址',
+        })
       }
     }
   } catch (e) {
     console.error("选择文件失败", e)
+    ElMessage.error({
+      message: '选择文件失败，请重试。错误原因：' + e,
+      showClose: true,
+      grouping: true,
+    })
   }
 }
 
@@ -265,11 +278,48 @@ const selectSavePath = async () => {
     }
   } catch (e) {
     console.error("选择保存路径失败", e)
+    ElMessage.error({
+      message: '选择保存路径失败，请重试。错误原因：' + e,
+      showClose: true,
+      grouping: true,
+    })
   }
 }
 
 const startCrawling = () => {
   isCrawling.value = true
+
+  // 验证URL列表
+  const urlList = urls.value.trim().split('\n').filter(url => url.trim())
+  if (urlList.length === 0) {
+    ElNotification.warning({
+      title: 'URL 列表为空',
+      message: '请先输入需要采集的 URL 地址',
+    })
+    isCrawling.value = false
+    return
+  }
+
+  // 验证保存路径
+  if (!savePath.value) {
+    ElNotification.warning({
+      title: '保存路径未设置',
+      message: '请先选择图片保存路径',
+    })
+    isCrawling.value = false
+    return
+  }
+
+  // 验证URL数量
+  if (urlList.length > maxDownloadURLCount) {
+    ElNotification.warning({
+      title: 'URL数量超限',
+      message: `一次最多只能采集${maxDownloadURLCount}个URL地址`,
+    })
+    isCrawling.value = false
+    return
+  }
+
   // TODO: 实现图片采集逻辑
   // 模拟进度条更新
   const interval = setInterval(() => {
