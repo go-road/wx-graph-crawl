@@ -243,35 +243,23 @@ const handleCropHeightInput = (event) => {
 
 const selectFile = async () => {
   try {
-    const res = await SelectFile()
-    console.log("选择文件 --->", res)
-    
-    if (res && res.length === 3) {
-      const [filePath, validUrls, err] = res
-      if (err) {
-        throw new Error(err)
+    const { file_path: filePath, valid_urls: validUrls } = await SelectFile()
+    if (filePath) {
+      selectedFilePath.value = filePath
+      if (validUrls && validUrls.length > 0) {
+        urls.value = validUrls.join('\n')
+      } else {
+        urls.value = ''
       }
-      
-      if (filePath) {
-        selectedFilePath.value = filePath
-        if (validUrls && validUrls.length > 0) {
-          urls.value = validUrls.join('\n')
-        } else {
-          urls.value = ''
-        }
-      }
-    } else {
-      throw new Error('返回数据格式不正确')
     }
-  } catch (error) {
-    console.error('选择文件失败:', error)
+  } catch (e) {
+    console.error("选择文件失败", e)
   }
 }
 
 const selectSavePath = async () => {
   try {
     const dirPath = await SelectDirectory();
-    console.log("选择保存路径 --->", dirPath)
     if (dirPath) {
       savePath.value = dirPath
     }
