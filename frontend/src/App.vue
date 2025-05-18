@@ -92,14 +92,11 @@
           </div>
 
           <!-- 进度条 -->
-          <div v-if="isCrawling" class="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              class="bg-blue-500 h-2.5 rounded-full transition-all duration-300 mb-2"
-              :style="{ width: `${progress}%` }"
-            ></div>
+          <div v-if="isCrawling" class="w-full h-2.5">
             <el-progress
                 :percentage="progress"
                 :stroke-width="12"
+                status="success"
                 striped
                 striped-flow
                 :duration="10"
@@ -330,24 +327,24 @@ const startCrawling = async () => {
   }
 
   try {
-    progress.value = 25
+    progress.value = 30
     const crawlingResult = await Crawling({
       img_save_path: savePath.value,
       img_urls: urlList,
       timeout_seconds: timeout.value,
     })
-    progress.value = 80
-    console.log("采集完成", crawlingResult)
-    let noticeMsg = '累计耗时：' + crawlingResult.cast_time_str +
-        '\n成功采集了 ' + crawlingResult.crawl_url_count + '个 URL 地址，\n' +
-        '总共下载了 <span class="bg-yellow-50">' + crawlingResult.crawl_img_count + '</span> 张图片，\n' +
-        '文案内容保存于 ' + crawlingResult.text_content_save_path + ' 文件中。'
-    if (crawlingResult.err_content !== '') {
-      noticeMsg += '\n 出现了以下错误：\n\n' + crawlingResult.err_content
-    }
     progress.value = 100
+    console.log("采集完成", crawlingResult)
+    let noticeMsg = '累计耗时：<span class="text-blue-600 font-medium">' + crawlingResult.cast_time_str + '</span>\n' +
+        '成功采集了 <span class="text-green-600 font-medium">' + crawlingResult.crawl_url_count + '</span> 个 URL 地址，\n' +
+        '总共下载了 <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + crawlingResult.crawl_img_count + '</span> 张图片，\n' +
+        '文案内容保存于 <span class="text-gray-600 font-medium">' + crawlingResult.text_content_save_path + '</span> 文件中。'
+    if (crawlingResult.err_content !== '') {
+      noticeMsg += '\n\n<span class="text-red-600 font-medium">出现了以下错误：</span>\n\n' + 
+          '<span class="text-red-500">' + crawlingResult.err_content + '</span>'
+    }
     ElNotification.success({
-      title: '采集完成✅',
+      title: '恭喜🎉采集完成！',
       message: noticeMsg,
       duration: 30000,
       showClose: true,
