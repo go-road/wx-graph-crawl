@@ -94,9 +94,17 @@
           <!-- 进度条 -->
           <div v-if="isCrawling" class="w-full bg-gray-200 rounded-full h-2.5">
             <div
-              class="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
+              class="bg-blue-500 h-2.5 rounded-full transition-all duration-300 mb-2"
               :style="{ width: `${progress}%` }"
             ></div>
+            <el-progress
+                :percentage="progress"
+                :stroke-width="12"
+                striped
+                striped-flow
+                :duration="10"
+            >
+            </el-progress>
           </div>
         </div>
       </div>
@@ -168,16 +176,17 @@ import { ref, onMounted } from 'vue'
 import {GetPreferenceInfo} from "../wailsjs/go/handlers/User.js"
 import {SelectFile, SelectDirectory} from "../wailsjs/go/handlers/FileHandler.js"
 import { ElNotification, ElMessage } from 'element-plus'
+import {Crawling} from "../wailsjs/go/handlers/ImageHandler.js";
 
 const maxDownloadURLCount = 50 // 最大下载URL数量
 const defaultDownloadTimeout = 15 // 默认下载超时时间（秒）
 const defaultCropHeight = 20 // 默认裁剪高度（像素）
 
 // 状态变量
-const urls = ref('')
-const selectedFilePath = ref('')
-const savePath = ref('')
-const timeout = ref(15)
+const urls = ref('') // URL列表
+const selectedFilePath = ref('') // 已选择的文件路径
+const savePath = ref('') // 图片保存路径
+const timeout = ref(15) // 下载超时时间
 const progress = ref(0)
 const cropHeight = ref(20)
 
@@ -286,7 +295,7 @@ const selectSavePath = async () => {
   }
 }
 
-const startCrawling = () => {
+const startCrawling = async () => {
   isCrawling.value = true
 
   // 验证URL列表
@@ -320,17 +329,41 @@ const startCrawling = () => {
     return
   }
 
-  // TODO: 实现图片采集逻辑
-  // 模拟进度条更新
-  const interval = setInterval(() => {
-    if (progress.value >= 100) {
-      clearInterval(interval)
-      isCrawling.value = false
-      progress.value = 0
-    } else {
-      progress.value += 10
+  try {
+    progress.value = 25
+    const crawlingResult = await Crawling({
+      img_save_path: savePath.value,
+      img_urls: urlList,
+      timeout_seconds: timeout.value,
+    })
+    progress.value = 80
+    console.log("采集完成", crawlingResult)
+    let noticeMsg = '累计耗时：' + crawlingResult.cast_time_str +
+        '\n成功采集了 ' + crawlingResult.crawl_url_count + '个 URL 地址，\n' +
+        '总共下载了 <span class="bg-yellow-50">' + crawlingResult.crawl_img_count + '</span> 张图片，\n' +
+        '文案内容保存于 ' + crawlingResult.text_content_save_path + ' 文件中。'
+    if (crawlingResult.err_content !== '') {
+      noticeMsg += '\n 出现了以下错误：\n\n' + crawlingResult.err_content
     }
-  }, timeout.value * 1000)
+    progress.value = 100
+    ElNotification.success({
+      title: '采集完成✅',
+      message: noticeMsg,
+      duration: 30000,
+      showClose: true,
+      dangerouslyUseHTMLString: true,
+    })
+  } catch (e) {
+    console.error("采集失败", e)
+    ElMessage.error({
+      message: '采集失败，请重试。错误原因：' + e,
+      showClose: true,
+      grouping: true,
+    })
+  } finally {
+    isCrawling.value = false
+    progress.value = 0
+  }
 
 }
 

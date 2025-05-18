@@ -1,5 +1,41 @@
 export namespace types {
 	
+	export class CrawlingRequest {
+	    img_save_path: string;
+	    img_urls: string[];
+	    timeout_seconds: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CrawlingRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.img_save_path = source["img_save_path"];
+	        this.img_urls = source["img_urls"];
+	        this.timeout_seconds = source["timeout_seconds"];
+	    }
+	}
+	export class CrawlingResponse {
+	    text_content_save_path: string;
+	    crawl_url_count: number;
+	    crawl_img_count: number;
+	    err_content: string;
+	    cast_time_str: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CrawlingResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.text_content_save_path = source["text_content_save_path"];
+	        this.crawl_url_count = source["crawl_url_count"];
+	        this.crawl_img_count = source["crawl_img_count"];
+	        this.err_content = source["err_content"];
+	        this.cast_time_str = source["cast_time_str"];
+	    }
+	}
 	export class PreferenceSet {
 	    save_img_path: string;
 	    download_timeout: number;
