@@ -121,10 +121,5 @@ func (h *FileHandler) SelectDirectory() (string, error) {
 		return "", nil
 	}
 
-	// 确保目录路径以分隔符结尾
-	if !strings.HasSuffix(dirPath, string(os.PathSeparator)) {
-		dirPath += string(os.PathSeparator)
-	}
-
 	return dirPath, nil
 }
