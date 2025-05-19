@@ -36,6 +36,38 @@ export namespace types {
 	        this.cast_time_str = source["cast_time_str"];
 	    }
 	}
+	export class CroppingRequest {
+	    img_save_path: string;
+	    bottom_pixel: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CroppingRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.img_save_path = source["img_save_path"];
+	        this.bottom_pixel = source["bottom_pixel"];
+	    }
+	}
+	export class CroppingResponse {
+	    crop_img_path: string;
+	    crop_img_count: number;
+	    err_content: string;
+	    cast_time_str: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CroppingResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.crop_img_path = source["crop_img_path"];
+	        this.crop_img_count = source["crop_img_count"];
+	        this.err_content = source["err_content"];
+	        this.cast_time_str = source["cast_time_str"];
+	    }
+	}
 	export class PreferenceSet {
 	    save_img_path: string;
 	    download_timeout: number;
@@ -64,6 +96,34 @@ export namespace types {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.file_path = source["file_path"];
 	        this.valid_urls = source["valid_urls"];
+	    }
+	}
+	export class ShufflingRequest {
+	    img_save_path: string;
+	    max_num_image: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ShufflingRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.img_save_path = source["img_save_path"];
+	        this.max_num_image = source["max_num_image"];
+	    }
+	}
+	export class ShufflingResponse {
+	    shuffle_img_path: string;
+	    cast_time_str: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ShufflingResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.shuffle_img_path = source["shuffle_img_path"];
+	        this.cast_time_str = source["cast_time_str"];
 	    }
 	}
 

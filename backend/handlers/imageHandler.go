@@ -58,26 +58,47 @@ func (h *ImageHandler) Crawling(req types.CrawlingRequest) (res types.CrawlingRe
 	return res, nil
 }
 
-func (h *ImageHandler) Cropping() {
-	rootDir := "/Users/pudongping/glory/codes/make-funny/complete-projects/wx-graph-crawl/backend/handlers/download"
-	cropSvc := service.NewCropImgService(rootDir, 10, 65)
+func (h *ImageHandler) Cropping(req types.CroppingRequest) (res types.CroppingResponse, err error) {
+	zap.L().Info("开始裁剪图片", zap.String("请求参数", fmt.Sprintf("%+v", req)))
+	start := time.Now()
+	concurrencyMax := 10 // 并发数
+	cropSvc := service.NewCropImgService(req.ImgSavePath, concurrencyMax, req.BottomPixel)
 	cropResults, err := cropSvc.RunCropImg()
 	if err != nil {
 		zap.L().Error("裁剪失败", zap.Error(err))
 		return
 	}
-	fmt.Printf("裁剪结果: %+v\n", cropResults)
+
+	res.CropImgPath = req.ImgSavePath
+	// 统计裁剪成功的图片数量
+	for _, item := range cropResults {
+		if item.Err != nil {
+			zap.L().Error("裁剪失败", zap.String("ImgPath", item.ImgPath), zap.Error(item.Err))
+			res.ErrContent += item.Err.Error() + " | \n"
+		} else {
+			res.CropImgCount++
+		}
+	}
+	castTime := time.Since(start)
+	res.CastTimeStr = castTime.String()
+
+	zap.L().Info("裁剪图片结束", zap.String("返回结果", fmt.Sprintf("%+v", res)))
+	return res, nil
 }
 
-func (h *ImageHandler) Shuffling() {
+func (h *ImageHandler) Shuffling(req types.ShufflingRequest) (res types.ShufflingResponse, err error) {
+	zap.L().Info("开始移动图片", zap.String("请求参数", fmt.Sprintf("%+v", req)))
 	start := time.Now()
-	rootDir := "/Users/pudongping/glory/codes/make-funny/complete-projects/wx-graph-crawl/backend/handlers/download"
-	moveImgSvc := service.NewMoveImgService(rootDir, 5)
-	err := moveImgSvc.RunMoveImg()
+	moveImgSvc := service.NewMoveImgService(req.ImgSavePath, req.MaxNumImage)
+	err = moveImgSvc.RunMoveImg()
 	if err != nil {
 		zap.L().Error("移动图片失败", zap.Error(err))
 		return
 	}
 	castTime := time.Since(start)
-	zap.L().Info("移动图片结束，总耗时", zap.String("耗时", castTime.String()))
+	res.ShuffleImgPath = req.ImgSavePath
+	res.CastTimeStr = castTime.String()
+
+	zap.L().Info("移动图片结束", zap.String("返回结果", fmt.Sprintf("%+v", res)))
+	return res, nil
 }

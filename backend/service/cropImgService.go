@@ -109,6 +109,8 @@ func (svc *CropImgService) processFile(path string, bottomPixel int, wg *sync.Wa
 		return
 	}
 
+	cropResultChan <- cropResult // 将裁剪结果发送到通道中
+
 	zap.L().Info("裁剪并保存成功", zap.String("path", path))
 }
 

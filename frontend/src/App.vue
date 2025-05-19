@@ -12,7 +12,7 @@
         <div class="space-y-4">
           <!-- URL输入区域 -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">URL 地址列表（一行一个 URL，最多 {{maxDownloadURLCount}} 个）</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL 地址列表（一行一个 URL，最多 {{configureInit.maxDownloadURLCount}} 个）</label>
             <textarea
               v-model="urls"
               rows="4"
@@ -170,27 +170,38 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ElNotification, ElMessage } from 'element-plus'
 import {GetPreferenceInfo} from "../wailsjs/go/handlers/User.js"
 import {SelectFile, SelectDirectory} from "../wailsjs/go/handlers/FileHandler.js"
-import { ElNotification, ElMessage } from 'element-plus'
-import {Crawling} from "../wailsjs/go/handlers/ImageHandler.js";
+import {Crawling, Cropping, Shuffling} from "../wailsjs/go/handlers/ImageHandler.js"
 
-const maxDownloadURLCount = 50 // 最大下载URL数量
-const defaultDownloadTimeout = 15 // 默认下载超时时间（秒）
-const defaultCropHeight = 20 // 默认裁剪高度（像素）
+const configureInit = {
+  maxDownloadURLCount: 50, // 最大下载URL数量
+  maxNumImageSplitDirectory: 5, // 当一个目录中的图片超过多少张时，开始拆分目录
+  crop: {
+    defaultValue: 65, // 默认裁剪高度 （像素）
+    minValue: 1,
+    maxValue: 500,
+  },
+  downloadTimeout: {
+    defaultValue: 15, // 默认下载超时时间（秒）
+    minValue: 1,
+    maxValue: 500,
+  },
+}
 
 // 状态变量
 const urls = ref('') // URL列表
 const selectedFilePath = ref('') // 已选择的文件路径
 const savePath = ref('') // 图片保存路径
-const timeout = ref(15) // 下载超时时间
+const timeout = ref(configureInit.downloadTimeout.defaultValue) // 下载超时时间
 const progress = ref(0)
-const cropHeight = ref(20)
+const cropHeight = ref(configureInit.downloadTimeout.defaultValue) // 裁剪高度
 
 // 操作状态
-const isCrawling = ref(false)
-const isCropping = ref(false)
-const isShuffling = ref(false)
+const isCrawling = ref(false) // 是否正在采集
+const isCropping = ref(false) // 是否正在裁剪
+const isShuffling = ref(false) // 是否正在打乱
 
 const urlInputPlaceholder = '请输入微信"小绿书" URL 地址，一行一个，' +
     '例如：\n' +
@@ -214,18 +225,18 @@ onMounted(() => {
 const handleTimeoutInput = (event) => {
   const value = event.target.value
   if (value === '') {
-    timeout.value = 15 // 默认值
+    timeout.value = configureInit.downloadTimeout.defaultValue // 默认值
     return
   }
   const num = parseInt(value)
   if (isNaN(num)) {
-    timeout.value = 15 // 默认值
+    timeout.value = configureInit.downloadTimeout.defaultValue // 默认值
     return
   }
-  if (num < 1) {
-    timeout.value = 1
-  } else if (num > 50) {
-    timeout.value = 50
+  if (num < configureInit.downloadTimeout.minValue) {
+    timeout.value = configureInit.downloadTimeout.minValue
+  } else if (num > configureInit.downloadTimeout.maxValue) {
+    timeout.value = configureInit.downloadTimeout.maxValue
   } else {
     timeout.value = num
   }
@@ -234,18 +245,18 @@ const handleTimeoutInput = (event) => {
 const handleCropHeightInput = (event) => {
   const value = event.target.value
   if (value === '') {
-    cropHeight.value = 20 // 默认值
+    cropHeight.value = configureInit.crop.defaultValue // 默认值
     return
   }
   const num = parseInt(value)
   if (isNaN(num)) {
-    cropHeight.value = 20 // 默认值
+    cropHeight.value = configureInit.crop.defaultValue // 默认值
     return
   }
-  if (num < 1) {
-    cropHeight.value = 1
-  } else if (num > 500) {
-    cropHeight.value = 500
+  if (num < configureInit.crop.minValue) {
+    cropHeight.value = configureInit.crop.minValue
+  } else if (num > configureInit.crop.maxValue) {
+    cropHeight.value = configureInit.crop.maxValue
   } else {
     cropHeight.value = num
   }
@@ -317,10 +328,10 @@ const startCrawling = async () => {
   }
 
   // 验证URL数量
-  if (urlList.length > maxDownloadURLCount) {
+  if (urlList.length > configureInit.maxDownloadURLCount) {
     ElNotification.warning({
       title: 'URL数量超限',
-      message: `一次最多只能采集${maxDownloadURLCount}个URL地址`,
+      message: `一次最多只能采集${configureInit.maxDownloadURLCount}个URL地址`,
     })
     isCrawling.value = false
     return
@@ -364,14 +375,89 @@ const startCrawling = async () => {
 
 }
 
-const startCropping = () => {
-  isCropping.value = true
-  // TODO: 实现图片裁剪逻辑
+const startCropping = async () => {
+  try {
+    isCropping.value = true
+
+    if (!savePath.value) {
+      ElNotification.warning({
+        title: '保存路径未设置',
+        message: '请先选择图片保存路径',
+      })
+      return
+    }
+
+    const {
+      crop_img_path: cropImgPath,
+      crop_img_count: cropImgCount,
+      err_content: errContent,
+      cast_time_str: castTimeStr,
+    } = await Cropping({
+      img_save_path: savePath.value,
+      bottom_pixel: cropHeight.value,
+    })
+    console.log("裁剪完成", cropImgPath, cropImgCount, errContent, castTimeStr)
+    let noticeMsg = '累计耗时：<span class="text-blue-600 font-medium">' + castTimeStr + '</span>\n' +
+        '裁剪了 <span class="text-green-600 font-medium">' + cropImgCount + '</span> 张图片，\n' +
+        '裁剪后的图片保存在 <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + cropImgPath + '</span> 文件夹中。'
+    if (errContent !== '') {
+      noticeMsg += '\n\n<span class="text-red-600 font-medium">出现了以下错误：</span>\n\n' +
+          '<span class="text-red-500">' + errContent + '</span>'
+    }
+    ElNotification.success({
+      title: '恭喜🎉裁剪完成！',
+      message: noticeMsg,
+      duration: 30000,
+      showClose: true,
+      dangerouslyUseHTMLString: true,
+    })
+  } catch (e) {
+    console.error("裁剪失败", e)
+    ElMessage.error({
+      message: '裁剪失败，请重试。错误原因：' + e,
+      showClose: true,
+      grouping: true,
+    })
+  } finally {
+    isCropping.value = false
+  }
 }
 
-const startShuffling = () => {
-  isShuffling.value = true
-  // TODO: 实现图片打乱逻辑
+const startShuffling = async () => {
+  try {
+    isShuffling.value = true
+    if (!savePath.value) {
+      ElNotification.warning({
+        title: '保存路径未设置',
+        message: '请先选择图片保存路径',
+      })
+      return
+    }
+
+    const shufflingResult = await Shuffling({
+      img_save_path: savePath.value,
+      max_num_image: configureInit.maxNumImageSplitDirectory
+    })
+    console.log("打乱完成", shufflingResult)
+    let noticeMsg = '累计耗时：<span class="text-blue-600 font-medium">' + shufflingResult.cast_time_str + '</span>\n' +
+        '打乱图片所在目录： <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + shufflingResult.shuffle_img_path + '</span>'
+    ElNotification.success({
+      title: '恭喜🎉打乱完成！',
+      message: noticeMsg,
+      duration: 30000,
+      showClose: true,
+      dangerouslyUseHTMLString: true,
+    })
+  } catch (e) {
+    console.error("打乱失败", e)
+    ElMessage.error({
+      message: '打乱失败，请重试。错误原因：' + e,
+      showClose: true,
+      grouping: true,
+    })
+  } finally {
+    isShuffling.value = false
+  }
 }
 </script>
 

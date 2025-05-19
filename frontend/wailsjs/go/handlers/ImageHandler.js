@@ -6,14 +6,14 @@ export function Crawling(arg1) {
   return window['go']['handlers']['ImageHandler']['Crawling'](arg1);
 }
 
-export function Cropping() {
-  return window['go']['handlers']['ImageHandler']['Cropping']();
+export function Cropping(arg1) {
+  return window['go']['handlers']['ImageHandler']['Cropping'](arg1);
 }
 
 export function SetContext(arg1) {
   return window['go']['handlers']['ImageHandler']['SetContext'](arg1);
 }
 
-export function Shuffling() {
-  return window['go']['handlers']['ImageHandler']['Shuffling']();
+export function Shuffling(arg1) {
+  return window['go']['handlers']['ImageHandler']['Shuffling'](arg1);
 }

@@ -5,8 +5,8 @@ import {context} from '../models';
 
 export function Crawling(arg1:types.CrawlingRequest):Promise<types.CrawlingResponse>;
 
-export function Cropping():Promise<void>;
+export function Cropping(arg1:types.CroppingRequest):Promise<types.CroppingResponse>;
 
 export function SetContext(arg1:context.Context):Promise<void>;
 
-export function Shuffling():Promise<void>;
+export function Shuffling(arg1:types.ShufflingRequest):Promise<types.ShufflingResponse>;
