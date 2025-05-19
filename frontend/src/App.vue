@@ -357,7 +357,7 @@ const startCrawling = async () => {
     ElNotification.success({
       title: '恭喜🎉采集完成！',
       message: noticeMsg,
-      duration: 30000,
+      duration: 10000,
       showClose: true,
       dangerouslyUseHTMLString: true,
     })
@@ -407,7 +407,7 @@ const startCropping = async () => {
     ElNotification.success({
       title: '恭喜🎉裁剪完成！',
       message: noticeMsg,
-      duration: 30000,
+      duration: 10000,
       showClose: true,
       dangerouslyUseHTMLString: true,
     })
@@ -444,7 +444,7 @@ const startShuffling = async () => {
     ElNotification.success({
       title: '恭喜🎉打乱完成！',
       message: noticeMsg,
-      duration: 30000,
+      duration: 10000,
       showClose: true,
       dangerouslyUseHTMLString: true,
     })

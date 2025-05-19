@@ -30,9 +30,9 @@ func main() {
 	wailsOptions := &options.App{
 		Title:                            "小绿书爬虫",
 		Width:                            1024,
-		MinWidth:                         1000,
-		Height:                           768,
-		MinHeight:                        600,
+		MinWidth:                         900,
+		Height:                           840,
+		MinHeight:                        800,
 		HideWindowOnClose:                true,        // 关闭窗口时隐藏而不是退出
 		EnableFraudulentWebsiteDetection: true,        // 启用针对欺诈内容（例如恶意软件或网络钓鱼尝试）的扫描服务
 		LogLevel:                         logger.INFO, // 日志级别
