@@ -3,23 +3,24 @@ package handlers
 import (
 	"context"
 
+	"github.com/pudongping/wx-graph-crawl/backend/service"
 	"github.com/pudongping/wx-graph-crawl/backend/types"
 )
 
-type User struct {
+var _ ContextSetter = (*UserHandler)(nil)
+
+type UserHandler struct {
 	ctx context.Context
 }
 
-func NewUser(ctx context.Context) *User {
-	return &User{
-		ctx: ctx,
-	}
+func NewUserHandler() *UserHandler {
+	return &UserHandler{}
 }
 
-func (u *User) GetPreferenceInfo() types.PreferenceSet {
-	return types.PreferenceSet{
-		SaveImgPath:        "D:/wx-graph-crawl/img",
-		DownloadTimeout:    30,
-		CropImgBottomPixel: 100,
-	}
+func (h *UserHandler) SetContext(ctx context.Context) {
+	h.ctx = ctx
+}
+
+func (h *UserHandler) GetPreferenceInfo() (types.GetPreferenceInfoResponse, error) {
+	return service.NewUserService().GetPreferenceInfo()
 }

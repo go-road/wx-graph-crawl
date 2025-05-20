@@ -171,7 +171,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElNotification, ElMessage } from 'element-plus'
-import {GetPreferenceInfo} from "../wailsjs/go/handlers/User.js"
+import {GetPreferenceInfo} from "../wailsjs/go/handlers/UserHandler.js"
 import {SelectFile, SelectDirectory} from "../wailsjs/go/handlers/FileHandler.js"
 import {Crawling, Cropping, Shuffling} from "../wailsjs/go/handlers/ImageHandler.js"
 
@@ -179,12 +179,12 @@ const configureInit = {
   maxDownloadURLCount: 50, // 最大下载URL数量
   maxNumImageSplitDirectory: 5, // 当一个目录中的图片超过多少张时，开始拆分目录
   crop: {
-    defaultValue: 65, // 默认裁剪高度 （像素）
+    defaultValue: 20, // 默认裁剪高度 （像素）
     minValue: 1,
     maxValue: 500,
   },
   downloadTimeout: {
-    defaultValue: 15, // 默认下载超时时间（秒）
+    defaultValue: 5, // 默认下载超时时间（秒）
     minValue: 1,
     maxValue: 500,
   },
@@ -381,8 +381,8 @@ const startCropping = async () => {
 
     if (!savePath.value) {
       ElNotification.warning({
-        title: '保存路径未设置',
-        message: '请先选择图片保存路径',
+        title: '图片路径未设置',
+        message: '请先点击【选择图片保存路径】按钮，选择需要裁剪的图片目录',
       })
       return
     }
@@ -399,9 +399,9 @@ const startCropping = async () => {
     console.log("裁剪完成", cropImgPath, cropImgCount, errContent, castTimeStr)
     let noticeMsg = '累计耗时：<span class="text-blue-600 font-medium">' + castTimeStr + '</span>\n' +
         '裁剪了 <span class="text-green-600 font-medium">' + cropImgCount + '</span> 张图片，\n' +
-        '裁剪后的图片保存在 <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + cropImgPath + '</span> 文件夹中。'
+        '裁剪图片目录： <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + cropImgPath + '</span>'
     if (errContent !== '') {
-      noticeMsg += '\n\n<span class="text-red-600 font-medium">出现了以下错误：</span>\n\n' +
+      noticeMsg += '\n\n<span class="text-red-600 font-medium">裁剪过程中，出现了以下错误：</span>\n\n' +
           '<span class="text-red-500">' + errContent + '</span>'
     }
     ElNotification.success({
@@ -428,8 +428,8 @@ const startShuffling = async () => {
     isShuffling.value = true
     if (!savePath.value) {
       ElNotification.warning({
-        title: '保存路径未设置',
-        message: '请先选择图片保存路径',
+        title: '图片路径未设置',
+        message: '请先点击【选择图片保存路径】按钮，选择需要打乱的图片目录',
       })
       return
     }
@@ -440,7 +440,7 @@ const startShuffling = async () => {
     })
     console.log("打乱完成", shufflingResult)
     let noticeMsg = '累计耗时：<span class="text-blue-600 font-medium">' + shufflingResult.cast_time_str + '</span>\n' +
-        '打乱图片所在目录： <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + shufflingResult.shuffle_img_path + '</span>'
+        '打乱图片目录： <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + shufflingResult.shuffle_img_path + '</span>'
     ElNotification.success({
       title: '恭喜🎉打乱完成！',
       message: noticeMsg,

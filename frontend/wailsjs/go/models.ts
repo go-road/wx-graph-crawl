@@ -68,13 +68,13 @@ export namespace types {
 	        this.cast_time_str = source["cast_time_str"];
 	    }
 	}
-	export class PreferenceSet {
+	export class GetPreferenceInfoResponse {
 	    save_img_path: string;
 	    download_timeout: number;
 	    crop_img_bottom_pixel: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new PreferenceSet(source);
+	        return new GetPreferenceInfoResponse(source);
 	    }
 	
 	    constructor(source: any = {}) {

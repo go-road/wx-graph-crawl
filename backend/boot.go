@@ -15,8 +15,8 @@ func NewBoot() *Boot {
 	// 这里可以添加需要绑定的 handler
 	// 如果没有在这里绑定，js 端将无法调用 go 端的代码
 	bindHandlers := []interface{}{
+		handlers.NewUserHandler(),
 		handlers.NewFileHandler(),
-		handlers.NewUser(nil),
 		handlers.NewImageHandler(),
 	}
 
