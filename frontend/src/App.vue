@@ -169,9 +169,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted, onUpdated } from 'vue'
 import { ElNotification, ElMessage } from 'element-plus'
-import {GetPreferenceInfo} from "../wailsjs/go/handlers/UserHandler.js"
+import {GetPreferenceInfo, SetPreferenceInfo} from "../wailsjs/go/handlers/UserHandler.js"
 import {SelectFile, SelectDirectory} from "../wailsjs/go/handlers/FileHandler.js"
 import {Crawling, Cropping, Shuffling} from "../wailsjs/go/handlers/ImageHandler.js"
 
@@ -210,16 +210,43 @@ const urlInputPlaceholder = '请输入微信"小绿书" URL 地址，一行一�
 
 onMounted(() => {
   // 获取用户偏好设置
-  GetPreferenceInfo().then((res) => {
-    if (res) {
-      // 设置默认值
-      timeout.value = res.download_timeout || 15
-      cropHeight.value = res.crop_img_bottom_pixel || 20
-      savePath.value = res.save_img_path || ''
-      console.log(res)
-    }
-  })
+  setPreferenceInfo()
 })
+
+watch([savePath, timeout, cropHeight], () => {
+  // 保存用户偏好设置
+  goSavePreferenceInfo()
+})
+
+const setPreferenceInfo = async () => {
+  try {
+    const res = await GetPreferenceInfo()
+    if (res) {
+      timeout.value = res.download_timeout || configureInit.downloadTimeout.defaultValue
+      cropHeight.value = res.crop_img_bottom_pixel || configureInit.crop.defaultValue
+      savePath.value = res.save_img_path || ''
+    }
+  } catch (e) {
+    console.error("获取用户偏好设置失败", e)
+    ElMessage.error({
+      message: '获取用户偏好设置失败，请重试。错误原因：' + e,
+      showClose: true,
+      grouping: true,
+    })
+  }
+}
+
+const goSavePreferenceInfo = async () => {
+  try {
+    await SetPreferenceInfo({
+      save_img_path: savePath.value,
+      download_timeout: timeout.value,
+      crop_img_bottom_pixel: cropHeight.value,
+    })
+  } catch (e) {
+    console.error("保存用户偏好设置失败", e)
+  }
+}
 
 // 输入处理函数
 const handleTimeoutInput = (event) => {
@@ -459,6 +486,7 @@ const startShuffling = async () => {
     isShuffling.value = false
   }
 }
+
 </script>
 
 <style>

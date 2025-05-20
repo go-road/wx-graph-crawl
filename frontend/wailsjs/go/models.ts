@@ -72,6 +72,7 @@ export namespace types {
 	    save_img_path: string;
 	    download_timeout: number;
 	    crop_img_bottom_pixel: number;
+	    updated_time: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new GetPreferenceInfoResponse(source);
@@ -82,6 +83,7 @@ export namespace types {
 	        this.save_img_path = source["save_img_path"];
 	        this.download_timeout = source["download_timeout"];
 	        this.crop_img_bottom_pixel = source["crop_img_bottom_pixel"];
+	        this.updated_time = source["updated_time"];
 	    }
 	}
 	export class SelectFileResponse {
@@ -96,6 +98,34 @@ export namespace types {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.file_path = source["file_path"];
 	        this.valid_urls = source["valid_urls"];
+	    }
+	}
+	export class SetPreferenceInfoRequest {
+	    save_img_path: string;
+	    download_timeout: number;
+	    crop_img_bottom_pixel: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetPreferenceInfoRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.save_img_path = source["save_img_path"];
+	        this.download_timeout = source["download_timeout"];
+	        this.crop_img_bottom_pixel = source["crop_img_bottom_pixel"];
+	    }
+	}
+	export class SetPreferenceInfoResponse {
+	    updated_time: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SetPreferenceInfoResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.updated_time = source["updated_time"];
 	    }
 	}
 	export class ShufflingRequest {

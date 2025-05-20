@@ -21,6 +21,10 @@ func (h *UserHandler) SetContext(ctx context.Context) {
 	h.ctx = ctx
 }
 
+func (h *UserHandler) SetPreferenceInfo(req types.SetPreferenceInfoRequest) (types.SetPreferenceInfoResponse, error) {
+	return service.NewUserService().SetPreferenceInfo(h.ctx, req)
+}
+
 func (h *UserHandler) GetPreferenceInfo() (types.GetPreferenceInfoResponse, error) {
 	return service.NewUserService().GetPreferenceInfo()
 }

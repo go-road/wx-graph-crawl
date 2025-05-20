@@ -6,3 +6,5 @@ import {context} from '../models';
 export function GetPreferenceInfo():Promise<types.GetPreferenceInfoResponse>;
 
 export function SetContext(arg1:context.Context):Promise<void>;
+
+export function SetPreferenceInfo(arg1:types.SetPreferenceInfoRequest):Promise<types.SetPreferenceInfoResponse>;

@@ -9,3 +9,7 @@ export function GetPreferenceInfo() {
 export function SetContext(arg1) {
   return window['go']['handlers']['UserHandler']['SetContext'](arg1);
 }
+
+export function SetPreferenceInfo(arg1) {
+  return window['go']['handlers']['UserHandler']['SetPreferenceInfo'](arg1);
+}
