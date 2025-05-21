@@ -7,6 +7,8 @@ toolchain go1.23.9
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/disintegration/imaging v1.6.2
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/pkg/errors v0.9.1
 	github.com/wailsapp/wails/v2 v2.10.1
 	go.uber.org/zap v1.27.0

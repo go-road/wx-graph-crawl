@@ -8,6 +8,7 @@ import (
 type Config struct {
 	App
 	Log
+	DB
 }
 
 type App struct {
@@ -26,6 +27,13 @@ type Log struct {
 	MaxAge      int    `json:"max_age"`
 	Compress    bool   `json:"compress"`
 	LocalTime   bool   `json:"local_time"`
+}
+
+type DB struct {
+	SQLite3FilePath    string `json:"sqlite3_file_path"`    // SQLite3数据库文件路径
+	MaxOpenConnections int    `json:"max_open_connections"` // 最大打开连接数
+	MaxIdleConnections int    `json:"max_idle_connections"` // 最大空闲连接数
+	MaxLifeSeconds     int    `json:"max_life_seconds"`     // 连接的最大生命周期，单位秒，设置为0表示不限制
 }
 
 var (
@@ -50,6 +58,12 @@ func initConfig() *Config {
 			MaxAge:      30,
 			Compress:    false,
 			LocalTime:   true,
+		},
+		DB: DB{
+			SQLite3FilePath:    filepath.Join(".wxGraphCrawler", "data", "wx_graph_crawler.db"),
+			MaxOpenConnections: 25,
+			MaxIdleConnections: 100,
+			MaxLifeSeconds:     5 * 60, // 设置为0表示不限制
 		},
 	}
 }

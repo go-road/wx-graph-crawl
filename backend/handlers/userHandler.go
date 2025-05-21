@@ -27,6 +27,6 @@ func (h *UserHandler) SetPreferenceInfo(req types.SetPreferenceInfoRequest) (typ
 }
 
 // GetPreferenceInfo 获取用户偏好信息
-func (h *UserHandler) GetPreferenceInfo() (types.GetPreferenceInfoResponse, error) {
+func (h *UserHandler) GetPreferenceInfo() (*types.GetPreferenceInfoResponse, error) {
 	return service.NewUserService().GetPreferenceInfo()
 }

@@ -5,8 +5,13 @@ import (
 	"embed"
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"path/filepath"
+	"runtime"
+	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/pudongping/wx-graph-crawl/backend"
 	"github.com/pudongping/wx-graph-crawl/backend/bootstrap"
 	"github.com/pudongping/wx-graph-crawl/backend/configs"
@@ -25,7 +30,7 @@ func main() {
 	app := NewApp()
 
 	bootstrap.PrintLogo()
-	rootPath, err := bootstrap.RootPath() // 获取项目根目录
+	rootPath, err := getRootPath() // 获取项目根目录
 	if err != nil {
 		log.Fatalf("获取项目根目录失败: %+v", err)
 	}
@@ -34,9 +39,17 @@ func main() {
 	cfg.Log.LogDir = filepath.Join(rootPath, cfg.Log.LogDir)
 	utils.ConsoleBlue(fmt.Sprintf("Run At: %s", rootPath))
 
-	// Initialize the backend
+	// 初始化日志
 	zapLogger := bootstrap.InitZapLog(cfg)
 	defer zapLogger.Sync()
+	// 初始化数据库
+	dbPath := filepath.Join(rootPath, cfg.DB.SQLite3FilePath)
+	db, err := bootstrap.InitDB(dbPath, cfg)
+	if err != nil {
+		log.Fatalf("数据库初始化失败: %+v", err)
+	}
+	defer bootstrap.CloseDB()
+	global.DB = db
 
 	// 业务
 	backendBoot := backend.NewBoot()
@@ -75,4 +88,46 @@ func main() {
 	if err := wails.Run(wailsOptions); err != nil {
 		log.Fatalf("Wails run error: %+v \n", err)
 	}
+}
+
+// getRootPath 获取项目根目录
+func getRootPath() (string, error) {
+	var (
+		exePath, rootPathByExecutable, rootPathByCaller, tmpDir string
+		err                                                     error
+	)
+	// 第一种方式：获取当前执行程序所在的绝对路径
+	// 这种仅在 `go build` 时，才可以获取正确的路径
+	// 获取当前执行的二进制文件的全路径，包括二进制文件名
+	exePath, err = os.Executable()
+	if err != nil {
+		return "", errors.Wrap(err, "获取当前执行文件路径失败 Executable")
+	}
+	rootPathByExecutable, err = filepath.EvalSymlinks(filepath.Dir(exePath))
+	if err != nil {
+		return "", errors.Wrap(err, "获取当前执行文件路径失败 EvalSymlinks")
+	}
+
+	// 第二种方式：获取当前执行文件绝对路径
+	// 这种方式在 `go run` 和 `go build` 时，都可以获取到正确的路径
+	// 但是交叉编译后，执行的结果是错误的结果
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		rootPathByCaller = path.Dir(filename)
+	}
+
+	// 可以通过 `echo $TMPDIR` 查看当前系统临时目录
+	tmpDir, err = filepath.EvalSymlinks(os.TempDir())
+	if err != nil {
+		return "", errors.Wrap(err, "获取当前系统临时目录失败")
+	}
+
+	// 对比通过 `os.Executable()` 获取到的路径是否与 `TMPDIR` 环境变量设置的路径相同
+	// 相同，则说明是通过 `go run` 命令启动的
+	// 不同，则是通过 `go build` 命令启动的
+	if strings.Contains(rootPathByExecutable, tmpDir) {
+		return rootPathByCaller, nil
+	}
+
+	return rootPathByExecutable, nil
 }
