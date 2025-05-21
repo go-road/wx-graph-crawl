@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/pudongping/wx-graph-crawl/backend/configs"
 	"go.uber.org/zap"
@@ -9,9 +10,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func InitZapLog() *zap.Logger {
-	cfg := configs.GetConfig()
-
+func InitZapLog(cfg *configs.Config) *zap.Logger {
 	// 编码器，如何写入日志
 	encoder := getEncoder(cfg.App.Mode)
 	// 将日志写到哪里去
@@ -51,7 +50,7 @@ func getLogWriter(cfg *configs.Config) zapcore.WriteSyncer {
 	// Compress 是否压缩
 	// LocalTime 是否使用本地时间
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   cfg.Log.LogDir + cfg.Log.LogFileName,
+		Filename:   filepath.Join(cfg.Log.LogDir, cfg.Log.LogFileName),
 		MaxSize:    cfg.Log.MaxSize,
 		MaxBackups: cfg.Log.MaxBackups,
 		MaxAge:     cfg.Log.MaxAge,

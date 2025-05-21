@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"path/filepath"
 	"sync"
 )
 
@@ -10,7 +11,10 @@ type Config struct {
 }
 
 type App struct {
-	Mode string `json:"mode"`
+	Mode       string `json:"mode"`
+	Title      string `json:"title"`
+	MacTitle   string `json:"mac_title"`
+	MacMessage string `json:"mac_message"`
 }
 
 type Log struct {
@@ -32,12 +36,15 @@ var (
 func initConfig() *Config {
 	return &Config{
 		App: App{
-			Mode: "dev",
+			Mode:       "dev", // dev、prod
+			Title:      "小绿书爬虫",
+			MacTitle:   "wxGraphCrawler",
+			MacMessage: "专用于抓取微信公众号“图片/文字”类型（俗称：小绿书）中的图片小工具 \r\n @Copyright 2025 by Alex",
 		},
 		Log: Log{
-			LogDir:      "./.wxGraphCrawler/logs/",
+			LogDir:      filepath.Join(".wxGraphCrawler", "logs"),
 			LogFileName: "crawl.log",
-			Level:       "debug", // debug、info、warn、error
+			Level:       "info", // debug、info、warn、error
 			MaxSize:     1,
 			MaxBackups:  5,
 			MaxAge:      30,

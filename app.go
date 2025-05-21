@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 
+	"github.com/pudongping/wx-graph-crawl/backend/configs"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -56,12 +58,27 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 }
 
 // 设置一些参数选项 https://wails.io/zh-Hans/docs/reference/options
-func (a *App) macOptions() *mac.Options {
+func (a *App) macOptions(cfg *configs.Config) *mac.Options {
 	return &mac.Options{
 		About: &mac.AboutInfo{
-			Title:   "wxGraphCrawler",
-			Message: "专用于抓取微信公众号“图片/文字”类型（俗称：小绿书）中的图片小工具 \r\n @Copyright 2025 by Alex",
+			Title:   cfg.App.MacTitle,
+			Message: cfg.App.MacMessage,
 			Icon:    nil,
 		},
 	}
+}
+
+func (a *App) logLevel(input string) logger.LogLevel {
+	// debug、info、warn、error
+	allow := map[string]logger.LogLevel{
+		"debug": logger.DEBUG,
+		"info":  logger.INFO,
+		"warn":  logger.WARNING,
+		"error": logger.ERROR,
+	}
+	result, ok := allow[input]
+	if !ok {
+		return logger.DEBUG
+	}
+	return result
 }
