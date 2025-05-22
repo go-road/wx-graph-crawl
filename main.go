@@ -18,12 +18,18 @@ import (
 	"github.com/pudongping/wx-graph-crawl/backend/global"
 	"github.com/pudongping/wx-graph-crawl/backend/utils"
 	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
+
+//go:embed build/appicon.png
+var icon []byte
 
 func main() {
 	// Create an instance of the app structure
@@ -55,19 +61,21 @@ func main() {
 	backendBoot := backend.NewBoot()
 
 	wailsLogLevel := app.logLevel(cfg.Log.Level)
+	// 设置一些参数选项 https://wails.io/zh-Hans/docs/reference/options
 	wailsOptions := &options.App{
-		Title:                            cfg.App.Title, // 应用程序标题
-		Width:                            1024,
-		MinWidth:                         900,
-		Height:                           840,
-		MinHeight:                        800,
+		Title:                            cfg.App.Title, // 窗口标题栏中显示的文本
+		Width:                            1024,          // 窗口的初始宽度
+		MinWidth:                         900,           // 窗口的最小宽度
+		Height:                           840,           // 窗口的初始高度
+		MinHeight:                        800,           // 窗口的最小高度
 		HideWindowOnClose:                true,          // 关闭窗口时隐藏而不是退出
 		EnableFraudulentWebsiteDetection: true,          // 启用针对欺诈内容（例如恶意软件或网络钓鱼尝试）的扫描服务
 		LogLevel:                         wailsLogLevel, // 日志级别
+		LogLevelProduction:               logger.ERROR,  // 生产环境的日志级别
 		AssetServer: &assetserver.Options{
 			Assets: assets, // 应用程序的前端资产
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1}, // 窗口的默认背景颜色
 		OnStartup: func(ctx context.Context) {
 			app.setContext(ctx) // 设置上下文
 			app.startup(ctx)    // 启动时的回调
@@ -76,9 +84,20 @@ func main() {
 			backendBoot.SetContext(ctx)
 
 		}, // 创建窗口并即将开始加载前端资源时的回调
-		OnShutdown:    app.shutdown,        // 应用程序即将退出时的回调
-		OnBeforeClose: app.beforeClose,     // 应用关闭前的回调
-		Mac:           app.macOptions(cfg), // macOS特定的选项
+		OnDomReady:    app.domready,    // 前端 Dom 加载完成回调
+		OnShutdown:    app.shutdown,    // 应用程序即将退出时的回调
+		OnBeforeClose: app.beforeClose, // 应用关闭前的回调
+		Mac: &mac.Options{
+			About: &mac.AboutInfo{
+				Title:   cfg.App.MacTitle,
+				Message: cfg.App.MacMessage,
+				Icon:    icon,
+			},
+		}, // macOS特定的选项
+		Linux: &linux.Options{
+			Icon:     icon,
+			Messages: &linux.Messages{WebKit2GTKMinRequired: cfg.App.LinuxMessage},
+		},
 		Bind: append([]interface{}{ // 我们希望向前端暴露的一部分结构体实例
 			app,
 		}, backendBoot.Binds()...), // 动态绑定所有 handler

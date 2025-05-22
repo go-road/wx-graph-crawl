@@ -3,6 +3,7 @@ package configs
 import (
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 type Config struct {
@@ -12,10 +13,11 @@ type Config struct {
 }
 
 type App struct {
-	Mode       string `json:"mode"`
-	Title      string `json:"title"`
-	MacTitle   string `json:"mac_title"`
-	MacMessage string `json:"mac_message"`
+	Mode         string `json:"mode"`
+	Title        string `json:"title"`
+	MacTitle     string `json:"mac_title"`
+	MacMessage   string `json:"mac_message"`
+	LinuxMessage string `json:"linux_message"`
 }
 
 type Log struct {
@@ -42,12 +44,16 @@ var (
 )
 
 func initConfig() *Config {
+	appDescription := "wxGraphCrawler 是一个专门用于抓取微信公众号“图片/文字”类型（俗称：小绿书）中的图片的小工具 \r\n" +
+		"@Copyright " + time.Now().Format("2006") + " by Alex"
+
 	return &Config{
 		App: App{
-			Mode:       "dev", // dev、prod
-			Title:      "小绿书爬虫",
-			MacTitle:   "wxGraphCrawler",
-			MacMessage: "专用于抓取微信公众号“图片/文字”类型（俗称：小绿书）中的图片小工具 \r\n @Copyright 2025 by Alex",
+			Mode:         "dev", // dev、prod
+			Title:        "小绿书爬虫",
+			MacTitle:     "wxGraphCrawler",
+			MacMessage:   appDescription,
+			LinuxMessage: appDescription,
 		},
 		Log: Log{
 			LogDir:      filepath.Join(".wxGraphCrawler", "logs"),
@@ -63,7 +69,7 @@ func initConfig() *Config {
 			SQLite3FilePath:    filepath.Join(".wxGraphCrawler", "data", "wx_graph_crawler.db"),
 			MaxOpenConnections: 25,
 			MaxIdleConnections: 100,
-			MaxLifeSeconds:     5 * 60, // 设置为0表示不限制
+			MaxLifeSeconds:     300, // 单位，秒；设置为0表示不限制
 		},
 	}
 }
