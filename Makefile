@@ -18,7 +18,7 @@ build-macos:
 
 # 打包到 Windows
 build-windows:
-	CGO_ENABLED=1 GOARCH=arm64 CC=aarch64-linux-gnu-gcc $(WAILS) build -clean -platform windows/amd64
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 $(WAILS) build -clean -platform windows/amd64
 
 # 检查环境
 doctor:
