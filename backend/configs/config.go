@@ -44,7 +44,8 @@ var (
 )
 
 func initConfig() *Config {
-	appDescription := "wxGraphCrawler 是一个专门用于抓取微信公众号“图片/文字”类型（俗称：小绿书）中的图片的小工具 \r\n" +
+	appDescription := "wxGraphCrawler 是一个专门用于抓取微信公众号“图片/文字”类型（俗称：小绿书）图片的小工具 \r\n" +
+		"Homepage：https://github.com/pudongping/wx-graph-crawl \r\n" +
 		"@Copyright " + time.Now().Format("2006") + " by Alex"
 
 	return &Config{
