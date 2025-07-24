@@ -179,7 +179,7 @@ const configureInit = {
   maxDownloadURLCount: 50, // 最大下载URL数量
   maxNumImageSplitDirectory: 5, // 当一个目录中的图片超过多少张时，开始拆分目录
   crop: {
-    defaultValue: 20, // 默认裁剪高度 （像素）
+    defaultValue: 65, // 默认裁剪高度 （像素）
     minValue: 1,
     maxValue: 500,
   },
@@ -196,7 +196,7 @@ const selectedFilePath = ref('') // 已选择的文件路径
 const savePath = ref('') // 图片保存路径
 const timeout = ref(configureInit.downloadTimeout.defaultValue) // 下载超时时间
 const progress = ref(0)
-const cropHeight = ref(configureInit.downloadTimeout.defaultValue) // 裁剪高度
+const cropHeight = ref(configureInit.crop.defaultValue) // 裁剪高度
 
 // 操作状态
 const isCrawling = ref(false) // 是否正在采集
