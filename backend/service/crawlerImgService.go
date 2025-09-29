@@ -2,11 +2,14 @@ package service
 
 import (
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,17 +21,44 @@ import (
 )
 
 var (
-	reImgURL      = regexp.MustCompile(`cdn_url: '([^']+)'`)                          // 抓取微信图片链接地址
-	reContentData = regexp.MustCompile(`window\.__QMTPL_SSR_DATA__=\s*(\{.*?\})\s*;`) // 解析图文类型的一些文字信息
-	reTitle       = regexp.MustCompile(`title:'(.*?)'`)                               // 抓取标题
-	reDesc        = regexp.MustCompile(`desc:'(.*?)'`)                                // 抓取正文内容
+	/**
+	对于HTML解析，建议使用专门的HTML解析库如 goquery 而不是正则表达式，因为正则表达式在处理嵌套结构时容易出现问题。
+	因为对于HTML解析任务，使用专门的HTML解析库（如 goquery）比正则表达式更加可靠和易于维护。
+	Go语言的正则表达式引擎不支持Perl风格的负向先行断言 (?! 语法。Go使用的是RE2正则表达式引擎，它不支持某些高级的Perl正则表达式特性。
+	*/
+
+	reImgURL = regexp.MustCompile(`cdn_url: '([^']+)'`) // 抓取微信图片链接地址
+	//reContentData = regexp.MustCompile(`window\.__QMTPL_SSR_DATA__=\s*(\{.*?\})\s*;`)   // 解析图文类型的一些文字信息
+
+	// 匹配 id 为 js_article 的 div 容器
+	//reContentData = regexp.MustCompile(`<div[^>]*id="js_article"[^>]*>([\s\S]*?)</div>`)
+	//reContentData = regexp.MustCompile(`<div[^>]*id="js_article"[^>]*>[\s\S]*?</div>`)
+
+	// 更精确的匹配方式，考虑嵌套的div标签
+	reContentData = regexp.MustCompile(`<div[^>]*id="js_article"[^>]*>([\s\S]*?)</div>`)
+
+	// 使用贪婪匹配，但需要确保HTML结构相对简单
+	//reContentData = regexp.MustCompile(`<div[^>]*id="js_article"[^>]*>[\s\S]*</div>`)
+
+	// 使用更复杂的正则表达式来正确匹配嵌套的div结构
+	//reContentData = regexp.MustCompile(`<div[^>]*id="js_article"[^>]*>([\s\S]*?)</div\s*>`)
+
+	// 匹配 section 标签内容
+	//reContentData = regexp.MustCompile(`<section[^>]*>([\s\S]*?)</section>`)
+
+	// 或者匹配特定 class 的 div 容器
+	//reContentData = regexp.MustCompile(`<div[^>]*class="[^"]*rich_media_content[^"]*"[^>]*>([\s\S]*?)</div>`)
+
+	reTitle = regexp.MustCompile(`<meta\s+property="og:title"\s+content="(.*?)"`) // 抓取标题
+	reDesc  = regexp.MustCompile(`<meta\s+name="description"\s+content="(.*?)"`)  // 抓取正文内容
 )
 
 type CrawlerImgService struct {
 	WXTuWenIMGUrls      []string      // 需要被抓取的微信图文链接地址
 	HttpClientTimeout   time.Duration // 网络请求超时时间
 	ImgSavePath         string        // 图片保存路径
-	TextContentFilePath string        // 文案保存文件地址
+	TextContentFilePath string        // 文案保存文件地址（所有文案保存到一个文件中）
+	TextContentFileDir  string        // 文案保存文件目录（每个文章文案保存到一个文件中）
 }
 
 func NewCrawlerImgService(
@@ -36,12 +66,14 @@ func NewCrawlerImgService(
 	httpClientTimeout time.Duration,
 	imgSavePath string,
 	textContentFilePath string,
+	textContentFileDir string,
 ) *CrawlerImgService {
 	return &CrawlerImgService{
 		WXTuWenIMGUrls:      wxTuWenIMGUrls,
 		HttpClientTimeout:   httpClientTimeout,
 		ImgSavePath:         imgSavePath,
 		TextContentFilePath: textContentFilePath,
+		TextContentFileDir:  textContentFileDir,
 	}
 }
 
@@ -82,6 +114,7 @@ func (svc *CrawlerImgService) work(i int, wxTuWenIMGUrl string, wg *sync.WaitGro
 		URL:    wxTuWenIMGUrl,
 		Number: num,
 		Err:    nil,
+		Title:  "未命名标题",
 	}
 	// 先一个一个的抓取每一个链接地址对应的 html 内容
 	html, err := svc.FetchWXHTMLContent(wxTuWenIMGUrl)
@@ -90,6 +123,8 @@ func (svc *CrawlerImgService) work(i int, wxTuWenIMGUrl string, wg *sync.WaitGro
 		crawlResultChan <- crawlRes
 		return
 	}
+	log.Info("抓取微信图片链接地址成功", zap.String("链接地址", wxTuWenIMGUrl), zap.Int("序号", num))
+	log.Info("微信HTML内容长度：", zap.Int("HTML内容长度", len(html)))
 	crawlRes.Html = html
 	// 从抓取后的 html 内容中解析出所有的图片链接地址
 	imgUrls, err := svc.ParseImgUrls(html)
@@ -107,7 +142,7 @@ func (svc *CrawlerImgService) work(i int, wxTuWenIMGUrl string, wg *sync.WaitGro
 	}
 	crawlRes.ImgSavePathSuccess = imgFilePaths
 	// 提取想要记录的文本信息
-	crawlRes.WriteContent = svc.GetWriteContent(html, num)
+	crawlRes.Title, crawlRes.WriteContent = svc.GetWriteContent(html, num)
 
 	crawlResultChan <- crawlRes
 }
@@ -144,7 +179,7 @@ func (svc *CrawlerImgService) FetchWXHTMLContent(wxTuWenUrl string) (string, err
 }
 
 func (svc *CrawlerImgService) ParseImgUrls(html string) ([]string, error) {
-	// 提取 picture_page_info_list 内容块
+	// 提取 window.picture_page_info_list 内容块
 	reList := regexp.MustCompile(`window\.picture_page_info_list\s*=\s*(\[[\s\S]*?\]);`)
 	listMatch := reList.FindStringSubmatch(html)
 	if len(listMatch) < 2 {
@@ -269,29 +304,119 @@ func (svc *CrawlerImgService) DownloadImgFile(imgUrl, imgFilePath string) (strin
 	return imgFilePath, nil
 }
 
-func (svc *CrawlerImgService) GetWriteContent(html string, num int) string {
+func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title string, content string) {
+	// 保存 html 文件
+	filePath := fmt.Sprintf("%s/%d.html", svc.ImgSavePath, num)
+	zap.L().Info("保存 html 文件供后续分析，文件路径为：" + filePath)
+	/*zap.L().Info("保存 html 文件供后续分析",
+	zap.String("reason", "content data not found"),
+	zap.String("save_path", svc.ImgSavePath),
+	zap.Int("number", num),
+	zap.String("file_path", filePath))*/
+	if err := utils.SaveFile(html, filePath); err != nil {
+		zap.L().Error("保存html 文件时，出现错误", zap.Error(err))
+	}
+
 	// 查找匹配的部分
-	matches := reContentData.FindStringSubmatch(html)
+	/*matches := reContentData.FindStringSubmatch(html)
 	if len(matches) <= 1 {
 		// 没有匹配到内容
-		return ""
+		zap.L().Error("未找到匹配的内容", zap.String("file_path", filePath))
+		return "未找到匹配的内容"
 	}
 	contentStr := matches[1] // 匹配到的内容
+	zap.L().Info("匹配到的内容：" + contentStr)
+	for _, contentStr := range matches {
+		zap.L().Info("匹配到的内容：" + contentStr)
+	}*/
+
+	// 使用 goquery 解析 HTML
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		zap.L().Error("解析 HTML 时出现错误", zap.Error(err))
+		return title, "解析 HTML 时出现错误"
+	}
+
+	// 查找 id 为 js_article 的 div
+	articleDiv := doc.Find("div#js_article")
+	if articleDiv.Length() == 0 {
+		zap.L().Error("未找到 id 为 js_article 的 div", zap.String("file_path", filePath))
+		return title, "未找到匹配的内容"
+	}
+
+	// 获取 div 内的 HTML 内容
+	contentStr, err := articleDiv.Html()
+	if err != nil {
+		zap.L().Error("获取文章内容时出现错误", zap.Error(err))
+		return title, "获取文章内容时出现错误"
+	}
+
+	//zap.L().Info("匹配到的内容：" + contentStr)
+	zap.L().Info("匹配到的内容长度：" + fmt.Sprintf("%d", len(contentStr)))
+
+	// 提取 section 和 span 标签的文本内容
+	extractedContent := svc.ExtractArticleContent(contentStr)
+	zap.L().Info("提取到的文本内容长度：" + fmt.Sprintf("%d", len(extractedContent)))
 
 	// 提取 title 和 desc 的值
 	// 因为提取的 jsonStr 内容中是一定会含有 title 和 desc 字段的，因此以下代码可不用做边界值的判断
 	// 这里不能直接通过解析 json 字符串的方式来提取内容，因为这里的内容不是一个合法的 json 字符串，它仅仅是一个 js 代码（尤其注意）
-	title := reTitle.FindStringSubmatch(contentStr)[1]
-	desc := reDesc.FindStringSubmatch(contentStr)[1]
+	titleMatch := reTitle.FindStringSubmatch(html)
+	descMatch := reDesc.FindStringSubmatch(html)
 
-	content := fmt.Sprintf("第 %d ====> \r\n", num)
+	if len(titleMatch) < 2 || len(descMatch) < 2 {
+		zap.L().Error("未找到标题或描述信息")
+		return title, "未找到标题或描述信息"
+	}
+
+	title = titleMatch[1]
+	desc := descMatch[1]
+
+	content = fmt.Sprintf("第 %d 篇文章====> \r\n", num)
 	content += "标题： " + title + "\r\n"
-	content += "正文内容 --------------- \r\n " + desc + "\r\n ------------- \r\n"
+	content += "描述： " + desc + "\r\n"
+	content += "正文内容 --------------- \r\n " + extractedContent + "\r\n ------------- \r\n"
 
-	return content
+	//zap.L().Info("文案内容：\n" + content)
+	return title, content
+}
+
+// ExtractArticleContent 从HTML内容中提取section和span标签的文本内容
+func (svc *CrawlerImgService) ExtractArticleContent(htmlContent string) string {
+	// 使用 goquery 进一步解析文章内容，提取 section 和 span 标签文本
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
+	if err != nil {
+		zap.L().Error("解析文章内容时出现错误", zap.Error(err))
+		return "解析文章内容时出现错误"
+	}
+
+	// 提取所有 section 标签的文本内容
+	var contentBuilder strings.Builder
+
+	// 提取所有 section 标签的文本内容
+	doc.Find("section").Each(func(i int, selection *goquery.Selection) {
+		text := strings.TrimSpace(selection.Text())
+		if text != "" {
+			contentBuilder.WriteString(text)
+			contentBuilder.WriteString("\n")
+		}
+	})
+
+	// 提取所有 span 标签的文本内容
+	doc.Find("span").Each(func(i int, selection *goquery.Selection) {
+		text := strings.TrimSpace(selection.Text())
+		if text != "" {
+			contentBuilder.WriteString(text)
+			contentBuilder.WriteString("\n")
+		}
+	})
+
+	// 返回拼接后的文本内容
+	return contentBuilder.String()
 }
 
 func (svc *CrawlerImgService) WriteWenAnContent(contents []types.CrawlResult) error {
+	// 一、所有文案保存到一个文件中
 	if err := utils.CreateFileIfNotExist(svc.TextContentFilePath); err != nil {
 		return errors.Wrap(err, "写入文案时，创建文本文件出现异常")
 	}
@@ -308,6 +433,21 @@ func (svc *CrawlerImgService) WriteWenAnContent(contents []types.CrawlResult) er
 
 	if err := os.WriteFile(svc.TextContentFilePath, []byte(result), 0644); err != nil {
 		return errors.Wrapf(err, "写入 %s 文件时，发生错误：%+v", svc.TextContentFilePath, err)
+	}
+
+	// 二、每个文章文案保存到一个文件中
+	if err := utils.MkdirIfNotExist(svc.TextContentFileDir); err != nil {
+		return errors.Wrap(err, "创建文本文件保存目录出现异常")
+	}
+	for _, content := range contents {
+		filePath := filepath.Join(svc.TextContentFileDir, fmt.Sprintf("%d_%s.txt", content.Number, content.Title))
+		if err := utils.CreateFileIfNotExist(filePath); err != nil {
+			return errors.Wrapf(err, "写入 %s 文件时，发生错误：%+v", filePath, err)
+		}
+
+		if err := os.WriteFile(filePath, []byte(content.WriteContent), 0644); err != nil {
+			return errors.Wrapf(err, "写入 %s 文件时，发生错误：%+v", filePath, err)
+		}
 	}
 
 	return nil

@@ -376,7 +376,8 @@ const startCrawling = async () => {
     let noticeMsg = '累计耗时：<span class="text-blue-600 font-medium">' + crawlingResult.cast_time_str + '</span>\n' +
         '成功采集了 <span class="text-green-600 font-medium">' + crawlingResult.crawl_url_count + '</span> 个 URL 地址，\n' +
         '总共下载了 <span class="text-purple-600 font-medium bg-purple-50 px-1 rounded">' + crawlingResult.crawl_img_count + '</span> 张图片，\n' +
-        '文案内容保存于 <span class="text-gray-600 font-medium">' + crawlingResult.text_content_save_path + '</span> 文件中。'
+        '全部文案内容保存于 <span class="text-gray-600 font-medium">' + crawlingResult.text_content_save_path + '</span> 文件中，\n' +
+        '单个文件的文案内容保存于 <span class="text-gray-600 font-medium">' + crawlingResult.text_content_save_dir + '</span> 目录下。'
     if (crawlingResult.err_content !== '') {
       noticeMsg += '\n\n<span class="text-red-600 font-medium">出现了以下错误：</span>\n\n' +
           '<span class="text-red-500">' + crawlingResult.err_content + '</span>'

@@ -17,6 +17,7 @@ export namespace types {
 	    }
 	}
 	export class CrawlingResponse {
+	    text_content_save_dir: string;
 	    text_content_save_path: string;
 	    crawl_url_count: number;
 	    crawl_img_count: number;
@@ -29,6 +30,7 @@ export namespace types {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.text_content_save_dir = source["text_content_save_dir"];
 	        this.text_content_save_path = source["text_content_save_path"];
 	        this.crawl_url_count = source["crawl_url_count"];
 	        this.crawl_img_count = source["crawl_img_count"];

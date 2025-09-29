@@ -24,7 +24,10 @@ func (svc *ImageService) Crawling(ctx context.Context, req types.CrawlingRequest
 	textContentFilePath := filepath.Join(req.ImgSavePath, constant.TextContentFileName) // 文字内容保存的路径
 	res.TextContentSavePath = textContentFilePath
 
-	crawlerImgSvc := NewCrawlerImgService(req.ImgUrls, httpClientTimeout, req.ImgSavePath, textContentFilePath)
+	textContentFileDir := filepath.Join(req.ImgSavePath, constant.TextContentFileDir) // 文字内容保存的目录
+	res.TextContentSaveDir = textContentFileDir
+
+	crawlerImgSvc := NewCrawlerImgService(req.ImgUrls, httpClientTimeout, req.ImgSavePath, textContentFilePath, textContentFileDir)
 	var spiderResults []types.CrawlResult
 	spiderResults, err = crawlerImgSvc.RunSpiderImg()
 	if err != nil {
