@@ -313,6 +313,51 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 	// 保存 html 文件
 	filePath := fmt.Sprintf("%s/%d.html", svc.ImgSavePath, num)
 	zap.L().Info("保存 html 文件供后续分析，文件路径为：" + filePath)
+
+	// 创建goquery文档对象用于解析HTML
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		zap.L().Error("解析 HTML 时出现错误", zap.Error(err))
+		return title, "解析 HTML 时出现错误"
+	} else {
+		// 找到所有的img标签并下载图片，然后更新其data-src和src属性
+		// 创建目录
+		dirPath := fmt.Sprintf("%s/%d", svc.ImgSavePath, num)
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
+			zap.L().Error("创建图片目录失败", zap.Error(err))
+		} else {
+			// 下载每个图片并更新路径
+			doc.Find("img").Each(func(i int, selection *goquery.Selection) {
+				// 尝试获取data-src属性
+				dataSrc, exists := selection.Attr("data-src")
+				if exists && strings.Contains(dataSrc, "http") {
+					// 构建本地图片路径：文件名/文件名_图片序号
+					localImgPath := fmt.Sprintf("%d/%d_%d.jpeg", num, num, i)
+					fullImgPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localImgPath)
+
+					// 下载图片
+					if _, err := svc.DownloadImgFile(dataSrc, fullImgPath); err != nil {
+						zap.L().Error("下载图片失败", zap.String("imgUrl", dataSrc), zap.Error(err))
+					} else {
+						// 同时更新data-src和src属性为本地路径
+						selection.SetAttr("data-src", localImgPath)
+						selection.SetAttr("src", localImgPath)
+						// 添加日志记录，确认属性被设置
+						zap.L().Info("设置图片属性",
+							zap.String("data-src", localImgPath),
+							zap.String("src", localImgPath))
+					}
+				}
+			})
+
+			// 获取更新后的HTML内容
+			updatedHtml, err := doc.Html()
+			if err == nil {
+				html = updatedHtml
+			}
+		}
+	}
+
 	/*zap.L().Info("保存 html 文件供后续分析",
 	zap.String("reason", "content data not found"),
 	zap.String("save_path", svc.ImgSavePath),
@@ -336,11 +381,11 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 	}*/
 
 	// 使用 goquery 解析 HTML
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	/*doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
 		zap.L().Error("解析 HTML 时出现错误", zap.Error(err))
 		return title, "解析 HTML 时出现错误"
-	}
+	}*/
 
 	// 查找 id 为 js_article 的 div
 	articleDiv := doc.Find("div#js_article")
