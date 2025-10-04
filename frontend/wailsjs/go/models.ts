@@ -19,8 +19,10 @@ export namespace types {
 	export class CrawlingResponse {
 	    text_content_save_dir: string;
 	    text_content_save_path: string;
+	    word_docs_save_path: string;
 	    crawl_url_count: number;
 	    crawl_img_count: number;
+	    word_docs_count: number;
 	    err_content: string;
 	    cast_time_str: string;
 	
@@ -32,8 +34,10 @@ export namespace types {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.text_content_save_dir = source["text_content_save_dir"];
 	        this.text_content_save_path = source["text_content_save_path"];
+	        this.word_docs_save_path = source["word_docs_save_path"];
 	        this.crawl_url_count = source["crawl_url_count"];
 	        this.crawl_img_count = source["crawl_img_count"];
+	        this.word_docs_count = source["word_docs_count"];
 	        this.err_content = source["err_content"];
 	        this.cast_time_str = source["cast_time_str"];
 	    }

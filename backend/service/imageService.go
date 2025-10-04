@@ -27,6 +27,8 @@ func (svc *ImageService) Crawling(ctx context.Context, req types.CrawlingRequest
 	textContentFileDir := filepath.Join(req.ImgSavePath, constant.TextContentFileDir) // 文字内容保存的目录
 	res.TextContentSaveDir = textContentFileDir
 
+	res.WordDocsSavePath = textContentFileDir // Word文档保存在文本保存路径下
+
 	crawlerImgSvc := NewCrawlerImgService(req.ImgUrls, httpClientTimeout, req.ImgSavePath, textContentFilePath, textContentFileDir)
 	var spiderResults []types.CrawlResult
 	spiderResults, err = crawlerImgSvc.RunSpiderImg()
@@ -36,14 +38,19 @@ func (svc *ImageService) Crawling(ctx context.Context, req types.CrawlingRequest
 	}
 
 	// 统计 抓取的链接地址数量 抓取成功并保存成功的图片数量
+	wordDocsCount := int64(0)
 	for _, item := range spiderResults {
 		res.CrawlUrlCount++
 		res.CrawlImgCount += int64(len(item.ImgSavePathSuccess))
+		if item.WriteContent != "" {
+			wordDocsCount++
+		}
 		if item.Err != nil {
 			zap.L().Error("抓取失败", zap.Int("Num", item.Number), zap.String("Url", item.URL), zap.Error(item.Err))
 			res.ErrContent += item.Err.Error() + " | \n"
 		}
 	}
+	res.WordDocsCount = wordDocsCount
 
 	castTime := time.Since(start)
 	res.CastTimeStr = castTime.String()

@@ -9,8 +9,10 @@ type CrawlingRequest struct {
 type CrawlingResponse struct {
 	TextContentSaveDir  string `json:"text_content_save_dir"`  // 文字内容保存目录
 	TextContentSavePath string `json:"text_content_save_path"` // 文字内容保存路径
+	WordDocsSavePath    string `json:"word_docs_save_path"`    // Word文档保存路径
 	CrawlUrlCount       int64  `json:"crawl_url_count"`        // 抓取的链接地址数量
 	CrawlImgCount       int64  `json:"crawl_img_count"`        // 抓取成功并保存成功的图片数量
+	WordDocsCount       int64  `json:"word_docs_count"`        // 生成的Word文档数量
 	ErrContent          string `json:"err_content"`            // 错误信息
 	CastTimeStr         string `json:"cast_time_str"`          // 耗时字符串
 }

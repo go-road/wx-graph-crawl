@@ -101,6 +101,11 @@ func (svc *CrawlerImgService) RunSpiderImg() (spiderResults []types.CrawlResult,
 		return spiderResults, errors.Wrap(err, "将文案写入时，出现异常")
 	}
 
+	// 为每篇文章生成Word文档
+	if err := NewWordService(svc.TextContentFileDir).GenerateWordForEachArticle(spiderResults); err != nil {
+		return spiderResults, errors.Wrap(err, "生成Word文档时出现异常")
+	}
+
 	return
 }
 
