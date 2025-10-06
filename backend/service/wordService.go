@@ -39,7 +39,7 @@ func (svc *WordService) GenerateWordForEachArticle(results []types.CrawlResult) 
 		}
 
 		// 处理文件名中的非法字符
-		title = sanitizeFilename(title)
+		title = sanitizeWordFilename(title)
 
 		// 构建Word文档路径
 		wordFilePath := filepath.Join(svc.SavePath, fmt.Sprintf("%s.docx", title))
@@ -65,7 +65,7 @@ func extractTitleFromContent(content string) string {
 }
 
 // 处理文件名中的非法字符
-func sanitizeFilename(filename string) string {
+func sanitizeWordFilename(filename string) string {
 	// 替换Windows文件名中的非法字符
 	filename = strings.ReplaceAll(filename, "<", "")
 	filename = strings.ReplaceAll(filename, ">", "")

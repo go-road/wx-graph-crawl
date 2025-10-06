@@ -350,8 +350,28 @@ func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath
 }
 
 func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title string, content string) {
-	// 保存 html 文件
-	filePath := fmt.Sprintf("%s/%d.html", svc.ImgSavePath, num)
+	// 提取 title 和 desc 的值
+	// 因为提取的 jsonStr 内容中是一定会含有 title 和 desc 字段的，因此以下代码可不用做边界值的判断
+	// 这里不能直接通过解析 json 字符串的方式来提取内容，因为这里的内容不是一个合法的 json 字符串，它仅仅是一个 js 代码（尤其注意）
+	titleMatch := reTitle.FindStringSubmatch(html)
+	descMatch := reDesc.FindStringSubmatch(html)
+
+	if len(titleMatch) < 2 || len(descMatch) < 2 {
+		zap.L().Error("未找到标题或描述信息")
+		return title, "未找到标题或描述信息"
+	}
+	for _, titleStr := range titleMatch {
+		zap.L().Info("匹配到的标题内容：" + titleStr)
+	}
+
+	title = titleMatch[1]
+	desc := descMatch[1]
+
+	// 清理标题，使其适合作为文件名
+	title = sanitizeFilename(title)
+
+	// 使用清理后的标题创建文件路径，保存 html 文件
+	filePath := fmt.Sprintf("%s/%s.html", svc.ImgSavePath, title)
 	zap.L().Info("保存 html 文件供后续分析，文件路径为：" + filePath)
 
 	// 创建goquery文档对象用于解析HTML
@@ -362,13 +382,13 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 	} else {
 		// 找到所有的img标签并下载图片，然后更新其data-src和src属性
 		// 创建资源目录
-		resourceDir := fmt.Sprintf("%s/%d", svc.ImgSavePath, num)
+		resourceDir := fmt.Sprintf("%s/%s", svc.ImgSavePath, title)
 		if err := os.MkdirAll(resourceDir, 0755); err != nil {
 			zap.L().Error("创建资源目录失败", zap.Error(err))
 		} else {
 			/**
 				- 所有资源文件（图片、CSS、JS）都保存在与HTML文件同名的子目录中
-			    - 图片命名格式：`文件名/文件名_图片序号.jpeg`
+			    - 图片命名格式：`文件名/图片序号.jpeg`
 			    - CSS命名格式：`文件名/style_序号.css`
 			    - JS命名格式：`文件名/script_序号.js`
 			以//开头的相对协议URL被正确转换为带有https:前缀的绝对URL
@@ -379,8 +399,8 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 				// 尝试获取data-src属性
 				dataSrc, exists := selection.Attr("data-src")
 				if exists && strings.Contains(dataSrc, "http") {
-					// 构建本地图片路径：文件名/文件名_图片序号
-					localImgPath := fmt.Sprintf("%d/%d_%d.jpeg", num, num, i)
+					// 构建本地图片路径：文件名/图片序号
+					localImgPath := fmt.Sprintf("%s/%d.jpeg", title, i)
 					fullImgPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localImgPath)
 
 					// 下载图片
@@ -411,7 +431,7 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 					}
 					if strings.Contains(href, "http") {
 						// 构建本地CSS路径
-						localCssPath := fmt.Sprintf("%d/style_%d.css", num, i)
+						localCssPath := fmt.Sprintf("%s/style_%d.css", title, i)
 						fullCssPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localCssPath)
 
 						// 下载CSS文件
@@ -438,7 +458,7 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 					}
 					if strings.Contains(src, "http") {
 						// 构建本地JS路径
-						localJsPath := fmt.Sprintf("%d/script_%d.js", num, i)
+						localJsPath := fmt.Sprintf("%s/script_%d.js", title, i)
 						fullJsPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localJsPath)
 
 						// 下载JS文件
@@ -471,26 +491,6 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 		zap.L().Error("保存html 文件时，出现错误", zap.Error(err))
 	}
 
-	// 查找匹配的部分
-	/*matches := reContentData.FindStringSubmatch(html)
-	if len(matches) <= 1 {
-		// 没有匹配到内容
-		zap.L().Error("未找到匹配的内容", zap.String("file_path", filePath))
-		return "未找到匹配的内容"
-	}
-	contentStr := matches[1] // 匹配到的内容
-	zap.L().Info("匹配到的内容：" + contentStr)
-	for _, contentStr := range matches {
-		zap.L().Info("匹配到的内容：" + contentStr)
-	}*/
-
-	// 使用 goquery 解析 HTML
-	/*doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-	if err != nil {
-		zap.L().Error("解析 HTML 时出现错误", zap.Error(err))
-		return title, "解析 HTML 时出现错误"
-	}*/
-
 	// 查找 id 为 js_article 的 div
 	articleDiv := doc.Find("div#js_article")
 	if articleDiv.Length() == 0 {
@@ -511,20 +511,6 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 	// 提取 section 和 span 标签的文本内容
 	extractedContent := svc.ExtractArticleContent(contentStr)
 	zap.L().Info("提取到的文本内容长度：" + fmt.Sprintf("%d", len(extractedContent)))
-
-	// 提取 title 和 desc 的值
-	// 因为提取的 jsonStr 内容中是一定会含有 title 和 desc 字段的，因此以下代码可不用做边界值的判断
-	// 这里不能直接通过解析 json 字符串的方式来提取内容，因为这里的内容不是一个合法的 json 字符串，它仅仅是一个 js 代码（尤其注意）
-	titleMatch := reTitle.FindStringSubmatch(html)
-	descMatch := reDesc.FindStringSubmatch(html)
-
-	if len(titleMatch) < 2 || len(descMatch) < 2 {
-		zap.L().Error("未找到标题或描述信息")
-		return title, "未找到标题或描述信息"
-	}
-
-	title = titleMatch[1]
-	desc := descMatch[1]
 
 	content = fmt.Sprintf("第 %d 篇文章====> \r\n", num)
 	content += "标题： " + title + "\r\n"
@@ -605,4 +591,18 @@ func (svc *CrawlerImgService) WriteWenAnContent(contents []types.CrawlResult) er
 	}
 
 	return nil
+}
+
+// 辅助函数来清理文件名
+func sanitizeFilename(filename string) string {
+	// 移除非字母数字和常见符号的字符
+	// 注意：在Go的正则表达式中，使用\p{Han}来匹配所有汉字
+	// reg := regexp.MustCompile(`[^a-zA-Z0-9\-\_\.\u4e00-\u9fa5]+`)
+	reg := regexp.MustCompile(`[^a-zA-Z0-9\-\_\.\p{Han}]+`)
+	cleanName := reg.ReplaceAllString(filename, "_")
+	// 限制文件名长度
+	if len(cleanName) > 100 {
+		cleanName = cleanName[:100]
+	}
+	return cleanName
 }
