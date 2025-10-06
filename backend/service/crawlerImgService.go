@@ -138,15 +138,20 @@ func (svc *CrawlerImgService) work(i int, wxTuWenIMGUrl string, wg *sync.WaitGro
 		crawlResultChan <- crawlRes
 		return
 	}
-	// 批量下载图片
-	imgFilePaths, err := svc.FastDownloadImgFiles(imgUrls, num)
-	if err != nil {
-		crawlRes.Err = err
-		crawlResultChan <- crawlRes
-		return
-	}
-	crawlRes.ImgSavePathSuccess = imgFilePaths
-	// 提取想要记录的文本信息
+	// 批量下载图片(GetWriteContent函数已下载图片，这里无需重复下载)
+	/*
+		imgFilePaths, err := svc.FastDownloadImgFiles(imgUrls, num)
+		if err != nil {
+			crawlRes.Err = err
+			crawlResultChan <- crawlRes
+			return
+		}
+		crawlRes.ImgSavePathSuccess = imgFilePaths
+	*/
+	crawlRes.ImgSavePathSuccess = imgUrls // 模拟返回图片保存成功的图片地址
+	//zap.L().Info("无需重复下载的图片数量：", zap.Int("count", len(imgUrls)))
+	zap.L().Info(fmt.Sprintf("无需重复下载的图片数量：%d", len(imgUrls)))
+	// 提取想要记录的内容
 	crawlRes.Title, crawlRes.WriteContent = svc.GetWriteContent(html, num)
 
 	crawlResultChan <- crawlRes
