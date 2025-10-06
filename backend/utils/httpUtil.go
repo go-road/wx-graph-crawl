@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -25,4 +27,28 @@ func HttpGet(client *http.Client, url string) (*http.Response, error) {
 	}
 
 	return res, nil
+}
+
+func HttpGetBody(client *http.Client, url string) (string, error) {
+	resp, err := HttpGet(client, url)
+	defer resp.Body.Close()
+
+	if err != nil {
+		return "", fmt.Errorf("获取响应体失败: %v", err)
+	}
+
+	bodyByte, err := io.ReadAll(resp.Body)
+	if err != nil {
+		resp.Body.Close() // 确保在读取响应体失败时关闭资源
+		return "", fmt.Errorf("读取响应体失败: %v", err)
+	}
+
+	bodyStr := string(bodyByte)
+	/*
+		fmt.Println("GET请求成功，状态码：", resp.StatusCode)
+		fmt.Println("响应头：", resp.Header)
+		fmt.Println("响应内容：")
+		fmt.Println(bodyStr)
+	*/
+	return bodyStr, nil
 }

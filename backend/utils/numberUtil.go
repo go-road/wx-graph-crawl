@@ -15,3 +15,9 @@ func GenRandomNumber(min, max int) int {
 
 	return randomNumber
 }
+
+// GetRandomInt 返回一个介于 min 和 max 之间的随机整数（包含min，不包含max）
+func GetRandomInt(min, max int) int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(max-min) + min
+}

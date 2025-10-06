@@ -1,13 +1,16 @@
 package service
 
 import (
+	"github.com/pudongping/wx-graph-crawl/backend/constant"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
 func TestRunSpiderImg(t *testing.T) {
-	imgSavePath := "/Users/pudongping/Downloads/wx_graph_crawl_downloads"
-	textContentFilePath := "/Users/pudongping/Downloads/wx_graph_crawl_downloads/content.txt"
+	imgSavePath := "E:\\Downloads\\wx_graph_crawl_downloads"
+	textContentFilePath := "E:\\Downloads\\wx_graph_crawl_downloads\\content.txt"
+	textContentFileDir := filepath.Join(imgSavePath, constant.TextContentFileDir)
 	wxTuWenIMGUrls := []string{
 		"https://mp.weixin.qq.com/s/hQf0N8P4vaaCaxt8OFzwfw",
 		"https://mp.weixin.qq.com/s/FCuFttc5rVfxn7sPxmAsMg",
@@ -16,7 +19,7 @@ func TestRunSpiderImg(t *testing.T) {
 	httpClientTimeout := 10 * time.Minute
 
 	start := time.Now()
-	crawlerImgSvc := NewCrawlerImgService(wxTuWenIMGUrls, httpClientTimeout, imgSavePath, textContentFilePath)
+	crawlerImgSvc := NewCrawlerImgService(wxTuWenIMGUrls, httpClientTimeout, imgSavePath, textContentFilePath, textContentFileDir)
 	spiderResults, err := crawlerImgSvc.RunSpiderImg()
 	if err != nil {
 		t.Fatalf("爬虫失败: %v", err)
@@ -32,7 +35,7 @@ func TestRunSpiderImg(t *testing.T) {
 }
 
 func TestRunCropImg(t *testing.T) {
-	imgSavePath := "/Users/pudongping/Downloads/wx_graph_crawl_downloads"
+	imgSavePath := "E:\\Downloads\\wx_graph_crawl_downloads"
 
 	start := time.Now()
 	cropSvc := NewCropImgService(imgSavePath, 10, 65)
@@ -50,7 +53,7 @@ func TestRunCropImg(t *testing.T) {
 }
 
 func TestRunMoveImg(t *testing.T) {
-	imgSavePath := "/Users/pudongping/Downloads/wx_graph_crawl_downloads"
+	imgSavePath := "E:\\Downloads\\wx_graph_crawl_downloads"
 	start := time.Now()
 	moveSvc := NewMoveImgService(imgSavePath, 5)
 	err := moveSvc.RunMoveImg()

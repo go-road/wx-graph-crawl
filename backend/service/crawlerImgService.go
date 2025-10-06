@@ -84,6 +84,8 @@ func (svc *CrawlerImgService) RunSpiderImg() (spiderResults []types.CrawlResult,
 	wg.Add(len(svc.WXTuWenIMGUrls))
 
 	for i, wxTuWenIMGUrl := range svc.WXTuWenIMGUrls {
+		// 随机休眠1~60秒，避免被封 => http2: Transport received GOAWAY from server ErrCode:COMPRESSION_ERROR
+		time.Sleep(time.Millisecond * time.Duration(utils.GenRandomNumber(1000, 60000)))
 		go svc.work(i, wxTuWenIMGUrl, &wg, crawlResultChan)
 	}
 
@@ -193,7 +195,8 @@ func (svc *CrawlerImgService) ParseImgUrls(html string) ([]string, error) {
 	reList := regexp.MustCompile(`window\.picture_page_info_list\s*=\s*(\[[\s\S]*?\]);`)
 	listMatch := reList.FindStringSubmatch(html)
 	if len(listMatch) < 2 {
-		return nil, errors.New("未找到 picture_page_info_list 内容")
+		return []string{}, nil // 返回空列表
+		//return nil, errors.New("未找到 picture_page_info_list 内容")
 	}
 	listContent := listMatch[1]
 
@@ -363,7 +366,8 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 
 	if len(titleMatch) < 2 || len(descMatch) < 2 {
 		zap.L().Error("未找到标题或描述信息")
-		return title, "未找到标题或描述信息"
+		//return title, "未找到标题或描述信息"
+		return title, html
 	}
 	for _, titleStr := range titleMatch {
 		zap.L().Info("匹配到的标题内容：" + titleStr)
