@@ -309,6 +309,46 @@ func (svc *CrawlerImgService) DownloadImgFile(imgUrl, imgFilePath string) (strin
 	return imgFilePath, nil
 }
 
+// 下载CSS和JS等资源文件
+func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath string) (string, error) {
+	httpClient := &http.Client{
+		Timeout: svc.HttpClientTimeout,
+	}
+	httpResp, err := utils.HttpGet(httpClient, resourceUrl)
+	if err != nil {
+		return "", errors.Wrap(err, "下载资源文件时，出现错误")
+	}
+	if httpResp != nil {
+		defer httpResp.Body.Close()
+	}
+
+	// 检查响应状态码
+	if httpResp.StatusCode != http.StatusOK {
+		return "", errors.Wrap(errors.Errorf("网络请求失败，错误码为：%d", httpResp.StatusCode), "HTTP状态码不为200")
+	}
+
+	zap.L().Info("正在下载资源文件", zap.String("resourceFilePath", resourceFilePath))
+
+	// 确保目录存在
+	dir := filepath.Dir(resourceFilePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", errors.Wrap(err, "创建资源文件目录失败")
+	}
+
+	file, err := os.Create(resourceFilePath)
+	if err != nil {
+		return "", errors.Wrap(err, "下载资源文件时，创建文件失败")
+	}
+	defer file.Close()
+	// 保存文件
+	_, err = io.Copy(file, httpResp.Body)
+	if err != nil {
+		return "", errors.Wrap(err, "保存下载的资源文件失败")
+	}
+
+	return resourceFilePath, nil
+}
+
 func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title string, content string) {
 	// 保存 html 文件
 	filePath := fmt.Sprintf("%s/%d.html", svc.ImgSavePath, num)
@@ -321,11 +361,19 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 		return title, "解析 HTML 时出现错误"
 	} else {
 		// 找到所有的img标签并下载图片，然后更新其data-src和src属性
-		// 创建目录
-		dirPath := fmt.Sprintf("%s/%d", svc.ImgSavePath, num)
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			zap.L().Error("创建图片目录失败", zap.Error(err))
+		// 创建资源目录
+		resourceDir := fmt.Sprintf("%s/%d", svc.ImgSavePath, num)
+		if err := os.MkdirAll(resourceDir, 0755); err != nil {
+			zap.L().Error("创建资源目录失败", zap.Error(err))
 		} else {
+			/**
+				- 所有资源文件（图片、CSS、JS）都保存在与HTML文件同名的子目录中
+			    - 图片命名格式：`文件名/文件名_图片序号.jpeg`
+			    - CSS命名格式：`文件名/style_序号.css`
+			    - JS命名格式：`文件名/script_序号.js`
+			以//开头的相对协议URL被正确转换为带有https:前缀的绝对URL
+			*/
+			// 1. 处理图片文件
 			// 下载每个图片并更新路径
 			doc.Find("img").Each(func(i int, selection *goquery.Selection) {
 				// 尝试获取data-src属性
@@ -350,10 +398,66 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 				}
 			})
 
+			// 2. 处理CSS文件
+			doc.Find("link[rel='stylesheet']").Each(func(i int, selection *goquery.Selection) {
+				// 获取href属性
+				href, exists := selection.Attr("href")
+				zap.L().Info("处理CSS文件", zap.String("href", href))
+				// 检查包含"http"的链接和使用相对协议URL（以//开头）的CSS链接
+				if exists {
+					// 处理相对协议URL (以//开头)
+					if strings.HasPrefix(href, "//") {
+						href = "https:" + href // 或 "http:"，建议使用https
+					}
+					if strings.Contains(href, "http") {
+						// 构建本地CSS路径
+						localCssPath := fmt.Sprintf("%d/style_%d.css", num, i)
+						fullCssPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localCssPath)
+
+						// 下载CSS文件
+						if _, err := svc.DownloadResourceFile(href, fullCssPath); err != nil {
+							zap.L().Error("下载CSS文件失败", zap.String("cssUrl", href), zap.Error(err))
+						} else {
+							// 更新href属性为本地路径
+							selection.SetAttr("href", localCssPath)
+							// 对于小型CSS和JS文件，可以考虑直接内联到HTML中，减少文件数量
+						}
+					}
+				}
+			})
+
+			// 3. 处理JS文件
+			doc.Find("script[src]").Each(func(i int, selection *goquery.Selection) {
+				// 获取src属性
+				src, exists := selection.Attr("src")
+				zap.L().Info("处理JS文件", zap.String("src", src))
+				if exists {
+					// 处理相对协议URL (以//开头)
+					if strings.HasPrefix(src, "//") {
+						src = "https:" + src // 或 "http:"，建议使用https
+					}
+					if strings.Contains(src, "http") {
+						// 构建本地JS路径
+						localJsPath := fmt.Sprintf("%d/script_%d.js", num, i)
+						fullJsPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localJsPath)
+
+						// 下载JS文件
+						if _, err := svc.DownloadResourceFile(src, fullJsPath); err != nil {
+							zap.L().Error("下载JS文件失败", zap.String("jsUrl", src), zap.Error(err))
+						} else {
+							// 更新src属性为本地路径
+							selection.SetAttr("src", localJsPath)
+						}
+					}
+				}
+			})
+
 			// 获取更新后的HTML内容
 			updatedHtml, err := doc.Html()
 			if err == nil {
 				html = updatedHtml
+			} else {
+				zap.L().Error("获取更新后的HTML内容失败", zap.Error(err))
 			}
 		}
 	}
