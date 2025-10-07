@@ -109,8 +109,11 @@ func (svc *CrawlerImgService) RunSpiderImg() (spiderResults []types.CrawlResult,
 	wg.Add(len(svc.WXTuWenIMGUrls))
 
 	for i, wxTuWenIMGUrl := range svc.WXTuWenIMGUrls {
-		// 随机休眠1~60秒，避免被封 => http2: Transport received GOAWAY from server ErrCode:COMPRESSION_ERROR
-		time.Sleep(time.Millisecond * time.Duration(utils.GenRandomNumber(1000, 60000)))
+		// 随机休眠1~10秒，避免被封 => http2: Transport received GOAWAY from server ErrCode:COMPRESSION_ERROR
+		d := time.Millisecond * time.Duration(utils.GenRandomNumber(1000, 10000))
+		fmt.Printf("准备随机休眠：%v", d)
+		time.Sleep(d)
+		log.Info("开始抓取", zap.String("链接地址", wxTuWenIMGUrl), zap.Int("序号", i+1))
 		go svc.work(i, wxTuWenIMGUrl, &wg, crawlResultChan)
 	}
 
