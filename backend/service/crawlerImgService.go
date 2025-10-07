@@ -498,6 +498,19 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 		zap.L().Error("解析 HTML 时出现错误", zap.Error(err))
 		return title, "解析 HTML 时出现错误"
 	} else {
+		// 设置HTML文档的title标签
+		titleTag := doc.Find("title")
+		if titleTag.Length() > 0 {
+			// 如果已经有title标签，则更新内容
+			titleTag.SetText(title)
+		} else {
+			// 如果没有title标签，则在head中添加一个新的title标签
+			head := doc.Find("head")
+			if head.Length() > 0 {
+				head.AppendHtml(fmt.Sprintf("<title>%s</title>", title))
+			}
+		}
+
 		// 找到所有的img标签并下载图片，然后更新其data-src和src属性
 		// 创建资源目录
 		resourceDir := fmt.Sprintf("%s/%s", svc.ImgSavePath, title)
