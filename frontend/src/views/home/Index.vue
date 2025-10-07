@@ -176,7 +176,7 @@ import {SelectFile, SelectDirectory} from "wailsjs/go/handlers/FileHandler.js"
 import {Crawling, Cropping, Shuffling} from "wailsjs/go/handlers/ImageHandler.js"
 
 const configureInit = {
-  maxDownloadURLCount: 50, // 最大下载URL数量
+  maxDownloadURLCount: 500, // 最大下载URL数量
   maxNumImageSplitDirectory: 5, // 当一个目录中的图片超过多少张时，开始拆分目录
   crop: {
     defaultValue: 65, // 默认裁剪高度 （像素）

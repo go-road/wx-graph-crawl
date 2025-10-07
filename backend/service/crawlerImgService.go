@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/labstack/gommon/log"
 	"io"
@@ -69,6 +70,7 @@ type CrawlerImgService struct {
 	TextContentFileDir  string        // 文案保存文件目录（每个文章文案保存到一个文件中）
 	CommonJSDir         string        // JS公共目录
 	CommonCSSDir        string        // CSS公共目录
+	FailedDownloadDir   string        // 下载失败地址保存目录
 }
 
 func NewCrawlerImgService(
@@ -81,10 +83,12 @@ func NewCrawlerImgService(
 	// 初始化公共目录路径
 	commonJSDir := filepath.Join(imgSavePath, "js")
 	commonCSSDir := filepath.Join(imgSavePath, "css")
+	failedDownloadDir := filepath.Join(imgSavePath, "failed_downloads")
 
 	// 确保公共目录存在
 	utils.MkdirIfNotExist(commonJSDir)
 	utils.MkdirIfNotExist(commonCSSDir)
+	utils.MkdirIfNotExist(failedDownloadDir)
 
 	return &CrawlerImgService{
 		WXTuWenIMGUrls:      wxTuWenIMGUrls,
@@ -94,6 +98,7 @@ func NewCrawlerImgService(
 		TextContentFileDir:  textContentFileDir,
 		CommonJSDir:         commonJSDir,
 		CommonCSSDir:        commonCSSDir,
+		FailedDownloadDir:   failedDownloadDir,
 	}
 }
 
@@ -148,6 +153,8 @@ func (svc *CrawlerImgService) work(i int, wxTuWenIMGUrl string, wg *sync.WaitGro
 	if err != nil {
 		crawlRes.Err = err
 		crawlResultChan <- crawlRes
+		// 记录文章抓取失败
+		svc.SaveFailedDownloadUrl(wxTuWenIMGUrl, fmt.Sprintf("抓取文章失败: %v", err))
 		return
 	}
 	log.Info("抓取微信图片链接地址成功", zap.String("链接地址", wxTuWenIMGUrl), zap.Int("序号", num))
@@ -310,6 +317,8 @@ func (svc *CrawlerImgService) DownloadImgFile(imgUrl, imgFilePath string) (strin
 	}
 	httpResp, err := utils.HttpGet(httpClient, imgUrl)
 	if err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(imgUrl, fmt.Sprintf("下载图片时出现错误: %v", err))
 		return "", errors.Wrap(err, "一张一张下载图片时，出现错误")
 	}
 	if httpResp != nil {
@@ -318,6 +327,8 @@ func (svc *CrawlerImgService) DownloadImgFile(imgUrl, imgFilePath string) (strin
 
 	// 检查响应状态码
 	if httpResp.StatusCode != http.StatusOK {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(imgUrl, fmt.Sprintf("网络请求失败，错误码为：%d", httpResp.StatusCode))
 		return "", errors.Wrap(errors.Errorf("网络请求失败，错误码为：%d", httpResp.StatusCode), "HTTP状态码不为200")
 	}
 
@@ -325,12 +336,16 @@ func (svc *CrawlerImgService) DownloadImgFile(imgUrl, imgFilePath string) (strin
 
 	file, err := os.Create(imgFilePath)
 	if err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(imgUrl, fmt.Sprintf("创建文件失败: %v", err))
 		return "", errors.Wrap(err, "下载图片时，创建文件失败")
 	}
 	defer file.Close()
 	// 保存文件
 	_, err = io.Copy(file, httpResp.Body)
 	if err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(imgUrl, fmt.Sprintf("保存文件失败: %v", err))
 		return "", errors.Wrap(err, "保存下载的图片文件失败")
 	}
 
@@ -350,6 +365,8 @@ func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath
 	}
 	httpResp, err := utils.HttpGet(httpClient, resourceUrl)
 	if err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(resourceUrl, fmt.Sprintf("下载资源文件时出现错误: %v", err))
 		return "", errors.Wrap(err, "下载资源文件时，出现错误")
 	}
 	if httpResp != nil {
@@ -358,6 +375,8 @@ func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath
 
 	// 检查响应状态码
 	if httpResp.StatusCode != http.StatusOK {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(resourceUrl, fmt.Sprintf("网络请求失败，错误码为：%d", httpResp.StatusCode))
 		return "", errors.Wrap(errors.Errorf("网络请求失败，错误码为：%d", httpResp.StatusCode), "HTTP状态码不为200")
 	}
 
@@ -366,17 +385,23 @@ func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath
 	// 确保目录存在
 	dir := filepath.Dir(resourceFilePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(resourceUrl, fmt.Sprintf("创建资源文件目录失败: %v", err))
 		return "", errors.Wrap(err, "创建资源文件目录失败")
 	}
 
 	file, err := os.Create(resourceFilePath)
 	if err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(resourceUrl, fmt.Sprintf("创建文件失败: %v", err))
 		return "", errors.Wrap(err, "下载资源文件时，创建文件失败")
 	}
 	defer file.Close()
 	// 保存文件
 	_, err = io.Copy(file, httpResp.Body)
 	if err != nil {
+		// 记录失败的下载地址
+		svc.SaveFailedDownloadUrl(resourceUrl, fmt.Sprintf("保存文件失败: %v", err))
 		return "", errors.Wrap(err, "保存下载的资源文件失败")
 	}
 
@@ -702,4 +727,38 @@ func sanitizeFilename(filename string) string {
 		cleanName = cleanName[:100]
 	}
 	return cleanName
+}
+
+// SaveFailedDownloadUrl 用于保存失败的下载地址到单独的文本文件
+func (svc *CrawlerImgService) SaveFailedDownloadUrl(url string, errMsg string) {
+	// 生成唯一的文件名，使用时间戳和URL的一部分
+	urlHash := fmt.Sprintf("%x", md5.Sum([]byte(url)))
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("%s_%s.txt", timestamp, urlHash[:8])
+	filepath := filepath.Join(svc.FailedDownloadDir, filename)
+
+	// 创建文件并写入失败信息
+	file, err := os.Create(filepath)
+	if err != nil {
+		zap.L().Error("创建失败下载记录文件失败", zap.String("filename", filename), zap.Error(err))
+		return
+	}
+	defer file.Close()
+
+	// 写入URL和错误信息，增加类型标识
+	recordType := "资源文件"
+	if strings.Contains(url, "mp.weixin.qq.com") || strings.Contains(errMsg, "抓取文章") {
+		recordType = "微信文章"
+	}
+
+	_, err = file.WriteString(fmt.Sprintf("类型: %s\nURL: %s\nError: %s\nTimestamp: %s\n",
+		recordType,
+		url,
+		errMsg,
+		time.Now().Format("2006-01-02 15:04:05")))
+	if err != nil {
+		zap.L().Error("写入失败下载记录文件失败", zap.String("filename", filename), zap.Error(err))
+	} else {
+		zap.L().Info("成功记录失败下载地址", zap.String("filename", filename))
+	}
 }
