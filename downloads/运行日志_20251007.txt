@@ -1,0 +1,171 @@
+Microsoft Windows [版本 10.0.26100.6584]
+(c) Microsoft Corporation。保留所有权利。
+
+E:\Git\go\wx-graph-crawl>make dev
+wails dev -browser
+Wails CLI v2.10.2
+
+Executing: go mod tidy
+  • Generating bindings: Done.
+  • Installing frontend dependencies: Done.
+  • Compiling frontend: Done.
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v6.3.5  ready in 585 ms
+
+Vite Server URL: http://localhost:5173/
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+Running frontend DevWatcher command: 'npm run dev'
+Building application for development...
+  • Generating bindings: Done.
+  • Generating application assets: Done.
+  • Compiling application: Done.
+ INFO  Wails is now using the new Go WebView2Loader. If you encounter any issues with it, please report them to https://github.com/wailsapp/wails/issues/2004. You could also use the old legacy loader with `-tags native_webview2loader`, but keep in mind this will be deprecated in the near future.
+
+Using DevServer URL: http://localhost:34115
+Using Frontend DevServer URL: http://localhost:5173/
+Using reload debounce setting of 100 milliseconds
+                         _____                 _            _____                    _
+                        / ____|               | |          / ____|                  | |
+ __      ____  ________| |  __ _ __ __ _ _ __ | |__ ______| |     _ __ __ ___      _| | ___ _ __
+ \ \ /\ / /\ \/ /______| | |_ | '__/ _` | '_ \| '_ \______| |    | '__/ _` \ \ /\ / / |/ _ \ '__|
+  \ V  V /  >  <       | |__| | | | (_| | |_) | | | |     | |____| | | (_| |\ V  V /| |  __/ |
+   \_/\_/  /_/\_\       \_____|_|  \__,_| .__/|_| |_|      \_____|_|  \__,_| \_/\_/ |_|\___|_|
+                                        | |
+                                        |_|
+
+Run At: E:\Git\go\wx-graph-crawl\build\bin
+
+INF | Serving assets from frontend DevServer URL: http://localhost:5173/
+2025/10/07 18:52:54 [WebView2] Environment created successfully
+INF | App startup -> 前端创建完毕，index.html 加载之前
+INF | App domready -> 前端加载完毕，index.html 及其资源加载完毕
+2025-10-07T18:52:56+08:00       INFO    handlers/userHandler.go:26      SetPreferenceInfo       {"req": {"save_img_path":"E:\\Downloads\\微信公众号合集\\一安未来","download_timeout":5,"crop_img_bottom_pixel":65}}
+
+
+To develop in the browser and call your bound Go methods from Javascript, navigate to: http://localhost:34115
+Watching (sub)/directory: E:\Git\go\wx-graph-crawl
+ERR | process message error: runtime:ready -> Unknown message from front end: runtime:ready
+ERR | Unknown message from front end: runtime:ready
+2025-10-07T18:52:57+08:00       INFO    handlers/userHandler.go:26      SetPreferenceInfo       {"req": {"save_img_path":"E:\\Downloads\\微信公众号合集\\一安未来","download_timeout":5,"crop_img_bottom_pixel":65}}
+2025/10/07 18:54:09 Unsolicited response received on idle HTTP channel starting with "HTTP/1.1 400 Bad Request\r\n\r\n"; err=<nil>
+2025-10-07T18:56:18+08:00       INFO    reflect/value.go:584    开始爬取图片    {"请求参数": "{ImgSavePath:E:\\Downloads\\微信公众号合集\\一安未来 ImgUrls:[http://mp.weixin.qq.com/s?__biz=Mzg5MzgxMTIyO
+Q==&mid=2247486674&idx=1&sn=0fc8d8387af76b5c6e6cf219686f475c&chksm=c02863a0f75feab61dc29e9d496d058f55e2cd4ba7d09fea03627c013ec9d2c875afb4220127#rd http://mp.weixin.qq.com/s?__biz=Mzg5MzgxMTIyOQ==&mid=2
+247484393&idx=1&sn=07822cd8eba13e62c5db949a5e1bf5de&chksm=c0286c9bf75fe58d9d8a5954d2a0b527f2c0362cae91ea18054eeea35884f1962d3d18a3d419#rd http://mp.weixin.qq.com/s?__biz=Mzg5MzgxMTIyOQ==&mid=2247501358&idx=1&sn=a3f1863ad02829d3a5cd2fbfb524e1b6&chksm=c02ba95cf75c204af901d1422bf86ab0f9ec7021b0d5b7b4c3db40a9075f536e115fa0d5416a#rd] TimeoutSeconds:5}"}
+{"time":"2025-10-07T18:56:59.2843458+08:00","level":"INFO","prefix":"-","file":"crawlerImgService.go","line":"153","message":"抓取微信图片链接地址成功{链接地址 15 0 http://mp.weixin.qq.com/s?__biz=Mzg5MzgxMTIyOQ==&mid=2247486674&idx=1&sn=0fc8d8387af76b5c6e6cf219686f475c&chksm=c02863a0f75feab61dc29e9d496d058f55e2cd4ba7d09fea03627c013ec9d2c875afb4220127#rd <nil>} {序号 11 1  <nil>}"}
+{"time":"2025-10-07T18:56:59.2843458+08:00","level":"INFO","prefix":"-","file":"crawlerImgService.go","line":"154","message":"微信HTML内容长度：{HTML内容长度 11 2221720  <nil>}"}
+2025-10-07T18:56:59+08:00       INFO    runtime/asm_amd64.s:1700        无需重复下载的图片数量：3
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:177        匹配到的标题内容：<meta property="og:title" content="一文教你快速上手EasyExcel"
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:177        匹配到的标题内容：一文教你快速上手EasyExcel
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:177        保存 html 文件供后续分析，文件路径为：E:\Downloads\微信公众号合集\一安未来/一文教你快速上手EasyExcel.html
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:497        正在下载图片    {"imgFilePath": "E:\\Downloads\\微信公众号合集\\一安未来/一文教你快速上手EasyExcel/1.jpeg"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 设置图片属性    {"data-src": "一文教你快速上手EasyExcel/1.jpeg", "src": "一文教你快速上手EasyExcel/1.jpeg"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:497        正在下载图片    {"imgFilePath": "E:\\Downloads\\微信公众号合集\\一安未来/一文教你快速上手EasyExcel/2.jpeg"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 设置图片属性    {"data-src": "一文教你快速上手EasyExcel/2.jpeg", "src": "一文教你快速上手EasyExcel/2.jpeg"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:497        正在下载图片    {"imgFilePath": "E:\\Downloads\\微信公众号合集\\一安未来/一文教你快速上手EasyExcel/3.jpeg"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 设置图片属性    {"data-src": "一文教你快速上手EasyExcel/3.jpeg", "src": "一文教你快速上手EasyExcel/3.jpeg"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/topic.mg5xph6vb9aba344.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\topic.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/channel_product_utils.mg5xph6v199e90e4.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\channel_product_utils.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/lottery.mg5xph6v8fa27823.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\lottery.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/search_fixed_bar_ls.mg5xph6v6ebea58c.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\search_fixed_bar_ls.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/cover_next.mg5xph6v28b3e841.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\cover_next.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/preview_reload.mg5xph6veb694068.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\preview_reload.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/interaction.mg5xph6v75c44785.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\interaction.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/index.mg5xph6v919c3032.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\index.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/qqmail_tpl_vite_entry.mg5xph6v9123f26a.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\qqmail_tpl_vite_entry.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/tencent_portfolio_light.mg5xph6v377b6ead.css"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\tencent_portfolio_light.css"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理JS文件      {"src": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/appmsg.mg5xph6vb2bb6709.js"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:561        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\js\\appmsg.js"}
+2025-10-07T18:56:59+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理JS文件      {"src": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/polyfills-legacy.mg5xph6va1104c02.js"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:561        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\js\\polyfills.js"}
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:177        匹配到的内容长度：39397
+2025-10-07T18:56:59+08:00       INFO    service/crawlerImgService.go:177        提取到的文本内容长度：13500
+{"time":"2025-10-07T18:57:08.1453878+08:00","level":"INFO","prefix":"-","file":"crawlerImgService.go","line":"153","message":"抓取微信图片链接地址成功{链接地址 15 0 http://mp.weixin.qq.com/s?__biz=Mzg5MzgxMTIyOQ==&mid=2247484393&idx=1&sn=07822cd8eba13e62c5db949a5e1bf5de&chksm=c0286c9bf75fe58d9d8a5954d2a0b527f2c0362cae91ea18054eeea35884f1962d3d18a3d419#rd <nil>} {序号 11 2  <nil>}"}
+{"time":"2025-10-07T18:57:08.1453878+08:00","level":"INFO","prefix":"-","file":"crawlerImgService.go","line":"154","message":"微信HTML内容长度：{HTML内容长度 11 2229452  <nil>}"}
+2025-10-07T18:57:08+08:00       INFO    runtime/asm_amd64.s:1700        无需重复下载的图片数量：0
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:177        匹配到的标题内容：<meta property="og:title" content="复杂业务下，如何实现多任务的异步编排"
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:177        匹配到的标题内容：复杂业务下，如何实现多任务的异步编排
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:177        保存 html 文件供后续分析，文件路径为：E:\Downloads\微信公众号合集\一安未来/复杂业务下_如何实现多任务的异步编排.html
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/topic.mg5xph6vb9aba344.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\topic.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/channel_product_utils.mg5xph6v199e90e4.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\channel_product_utils.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/lottery.mg5xph6v8fa27823.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\lottery.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/search_fixed_bar_ls.mg5xph6v6ebea58c.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\search_fixed_bar_ls.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/cover_next.mg5xph6v28b3e841.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\cover_next.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/preview_reload.mg5xph6veb694068.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\preview_reload.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/interaction.mg5xph6v75c44785.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\interaction.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/index.mg5xph6v919c3032.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\index.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/qqmail_tpl_vite_entry.mg5xph6v9123f26a.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\qqmail_tpl_vite_entry.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/tencent_portfolio_light.mg5xph6v377b6ead.css"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\tencent_portfolio_light.css"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理JS文件      {"src": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/appmsg.mg5xph6vb2bb6709.js"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:561        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\js\\appmsg.js"}
+2025-10-07T18:57:08+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理JS文件      {"src": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/polyfills-legacy.mg5xph6va1104c02.js"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:561        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\js\\polyfills.js"}
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:177        匹配到的内容长度：50982
+2025-10-07T18:57:08+08:00       INFO    service/crawlerImgService.go:177        提取到的文本内容长度：18176
+{"time":"2025-10-07T18:57:15.1284018+08:00","level":"INFO","prefix":"-","file":"crawlerImgService.go","line":"153","message":"抓取微信图片链接地址成功{链接地址 15 0 http://mp.weixin.qq.com/s?__biz=Mzg5MzgxMTIyOQ==&mid=2247501358&idx=1&sn=a3f1863ad02829d3a5cd2fbfb524e1b6&chksm=c02ba95cf75c204af901d1422bf86ab0f9ec7021b0d5b7b4c3db40a9075f536e115fa0d5416a#rd <nil>} {序号 11 3  <nil>}"}
+{"time":"2025-10-07T18:57:15.1291452+08:00","level":"INFO","prefix":"-","file":"crawlerImgService.go","line":"154","message":"微信HTML内容长度：{HTML内容长度 11 2259359  <nil>}"}
+2025-10-07T18:57:15+08:00       INFO    runtime/asm_amd64.s:1700        无需重复下载的图片数量：2
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:177        匹配到的标题内容：<meta property="og:title" content="别用Date了，Java8新特性之日期处理，现在学会也不迟！"
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:177        匹配到的标题内容：别用Date了，Java8新特性之日期处理，现在学会也不迟！
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:177        保存 html 文件供后续分析，文件路径为：E:\Downloads\微信公众号合集\一安未来/别用Date了_Java8新特性之日期处理_现在学会也不 迟_.html
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:497        正在下载图片    {"imgFilePath": "E:\\Downloads\\微信公众号合集\\一安未来/别用Date了_Java8新特性之日期处理_现在学会也不迟_/1.jpeg"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 设置图片属性    {"data-src": "别用Date了_Java8新特性之日期处理_现在学会也不迟_/1.jpeg", "src": "别用Date了_Java8新特性之日期处理_现在学会也不迟_/1.jpeg"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:497        正在下载图片    {"imgFilePath": "E:\\Downloads\\微信公众号合集\\一安未来/别用Date了_Java8新特性之日期处理_现在学会也不迟_/2.jpeg"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 设置图片属性    {"data-src": "别用Date了_Java8新特性之日期处理_现在学会也不迟_/2.jpeg", "src": "别用Date了_Java8新特性之日期处理_现在学会也不迟_/2.jpeg"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/topic.mg5xph6vb9aba344.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\topic.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/channel_product_utils.mg5xph6v199e90e4.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\channel_product_utils.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/lottery.mg5xph6v8fa27823.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\lottery.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/search_fixed_bar_ls.mg5xph6v6ebea58c.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\search_fixed_bar_ls.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/cover_next.mg5xph6v28b3e841.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\cover_next.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/preview_reload.mg5xph6veb694068.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\preview_reload.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/interaction.mg5xph6v75c44785.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\interaction.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/index.mg5xph6v919c3032.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\index.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/qqmail_tpl_vite_entry.mg5xph6v9123f26a.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\qqmail_tpl_vite_entry.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理CSS文件     {"href": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/tencent_portfolio_light.mg5xph6v377b6ead.css"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:531        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\css\\tencent_portfolio_light.css"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理JS文件      {"src": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/appmsg.mg5xph6vb2bb6709.js"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:561        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\js\\appmsg.js"}
+2025-10-07T18:57:15+08:00       INFO    goquery@v1.10.3/iteration.go:12 处理JS文件      {"src": "//res.wx.qq.com/mmbizappmsg/zh_CN/htmledition/js/assets/polyfills-legacy.mg5xph6va1104c02.js"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:561        资源文件已存在，跳过下载        {"resourceFilePath": "E:\\Downloads\\微信公众号合集\\一安未来\\js\\polyfills.js"}
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:177        匹配到的内容长度：77697
+2025-10-07T18:57:15+08:00       INFO    service/crawlerImgService.go:177        提取到的文本内容长度：9342
+2025-10-07T18:57:15+08:00       INFO    reflect/value.go:584    爬取图片结束    {"返回结果": "{TextContentSaveDir:E:\\Downloads\\微信公众号合集\\一安未来\\content TextContentSavePath:E:\\Downloads\\微 信公众号合集\\一安未来\\content.txt WordDocsSavePath:E:\\Downloads\\微信公众号合集\\一安未来\\content CrawlUrlCount:3 CrawlImgCount:5 WordDocsCount:3 ErrContent: CastTimeStr:56.9336545s}"}
+
+Caught quit
+��ֹ������������(Y/N)?
+Development mode exited
+ ♥   If Wails is useful to you or your company, please consider sponsoring the project:
+https://github.com/sponsors/leaanthony

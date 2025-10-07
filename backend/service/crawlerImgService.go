@@ -53,12 +53,22 @@ var (
 	reDesc  = regexp.MustCompile(`<meta\s+name="description"\s+content="(.*?)"`)  // 抓取正文内容
 )
 
+// 定义全局的资源文件映射，用于跟踪已下载的资源
+var (
+	// 用于线程安全的资源映射访问
+	resourceMutex sync.Mutex
+	// 存储已下载的资源文件路径，key为原始URL，value为本地文件路径
+	downloadedResources = make(map[string]string)
+)
+
 type CrawlerImgService struct {
 	WXTuWenIMGUrls      []string      // 需要被抓取的微信图文链接地址
 	HttpClientTimeout   time.Duration // 网络请求超时时间
 	ImgSavePath         string        // 图片保存路径
 	TextContentFilePath string        // 文案保存文件地址（所有文案保存到一个文件中）
 	TextContentFileDir  string        // 文案保存文件目录（每个文章文案保存到一个文件中）
+	CommonJSDir         string        // JS公共目录
+	CommonCSSDir        string        // CSS公共目录
 }
 
 func NewCrawlerImgService(
@@ -68,12 +78,22 @@ func NewCrawlerImgService(
 	textContentFilePath string,
 	textContentFileDir string,
 ) *CrawlerImgService {
+	// 初始化公共目录路径
+	commonJSDir := filepath.Join(imgSavePath, "js")
+	commonCSSDir := filepath.Join(imgSavePath, "css")
+
+	// 确保公共目录存在
+	utils.MkdirIfNotExist(commonJSDir)
+	utils.MkdirIfNotExist(commonCSSDir)
+
 	return &CrawlerImgService{
 		WXTuWenIMGUrls:      wxTuWenIMGUrls,
 		HttpClientTimeout:   httpClientTimeout,
 		ImgSavePath:         imgSavePath,
 		TextContentFilePath: textContentFilePath,
 		TextContentFileDir:  textContentFileDir,
+		CommonJSDir:         commonJSDir,
+		CommonCSSDir:        commonCSSDir,
 	}
 }
 
@@ -98,7 +118,7 @@ func (svc *CrawlerImgService) RunSpiderImg() (spiderResults []types.CrawlResult,
 		spiderResults = append(spiderResults, workRes)
 	}
 
-	// 将一些文案写入文件中
+	// 将文案写入文件中
 	if err := svc.WriteWenAnContent(spiderResults); err != nil {
 		return spiderResults, errors.Wrap(err, "将文案写入时，出现异常")
 	}
@@ -319,6 +339,12 @@ func (svc *CrawlerImgService) DownloadImgFile(imgUrl, imgFilePath string) (strin
 
 // 下载CSS和JS等资源文件
 func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath string) (string, error) {
+	// 检查文件是否已存在
+	if _, err := os.Stat(resourceFilePath); err == nil {
+		zap.L().Info("资源文件已存在，跳过下载", zap.String("resourceFilePath", resourceFilePath))
+		return resourceFilePath, nil
+	}
+
 	httpClient := &http.Client{
 		Timeout: svc.HttpClientTimeout,
 	}
@@ -355,6 +381,61 @@ func (svc *CrawlerImgService) DownloadResourceFile(resourceUrl, resourceFilePath
 	}
 
 	return resourceFilePath, nil
+}
+
+// 从URL中提取基础文件名（如从appmsg.mg0vycs343acb927.js提取appmsg.js）
+func extractBaseFilename(url string) string {
+	// 获取URL中的文件名部分
+	filename := filepath.Base(url)
+
+	// 正则表达式匹配文件名中的基础部分（如appmsg.mg0vycs343acb927.js中的appmsg）
+	baseNameRegex := regexp.MustCompile(`^([a-zA-Z0-9_]+)`)
+	matches := baseNameRegex.FindStringSubmatch(filename)
+	if len(matches) > 1 {
+		// 获取文件扩展名
+		ext := filepath.Ext(filename)
+		return matches[1] + ext
+	}
+
+	return filename
+}
+
+// 获取资源文件的公共路径，如果文件已存在则直接返回路径（绝对路径和相对路径）
+func (svc *CrawlerImgService) getCommonResourcePath(url, fileType string) (string, string) {
+	resourceMutex.Lock()
+	defer resourceMutex.Unlock()
+
+	var commonDir, relativePath string
+	// 根据文件类型确定保存目录
+	if fileType == "js" {
+		commonDir = svc.CommonJSDir
+	} else if fileType == "css" {
+		commonDir = svc.CommonCSSDir
+	} else {
+		// 默认为原路径逻辑
+		return url, url
+	}
+
+	// 提取基础文件名
+	baseFilename := extractBaseFilename(url)
+	// 构建完整的本地路径
+	fullPath := filepath.Join(commonDir, baseFilename)
+
+	// 检查资源是否已经下载过
+	if relativePath, exists := downloadedResources[url]; exists {
+		return fullPath, relativePath
+	}
+
+	if fileType == "js" {
+		relativePath = filepath.Join("js", baseFilename)
+	} else if fileType == "css" {
+		relativePath = filepath.Join("css", baseFilename)
+	}
+
+	// 记录已下载的资源
+	downloadedResources[url] = relativePath
+
+	return fullPath, relativePath
 }
 
 func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title string, content string) {
@@ -396,10 +477,10 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 			zap.L().Error("创建资源目录失败", zap.Error(err))
 		} else {
 			/**
-				- 所有资源文件（图片、CSS、JS）都保存在与HTML文件同名的子目录中
+				- 所有图片资源文件都保存在与HTML文件同名的子目录中
 			    - 图片命名格式：`文件名/图片序号.jpeg`
-			    - CSS命名格式：`文件名/style_序号.css`
-			    - JS命名格式：`文件名/script_序号.js`
+			    - CSS命名格式：`CSS公共目录/xxx.css`
+			    - JS命名格式：`JS公共目录/xxx.js`
 			以//开头的相对协议URL被正确转换为带有https:前缀的绝对URL
 			*/
 			// 1. 处理图片文件
@@ -440,15 +521,18 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 					}
 					if strings.Contains(href, "http") {
 						// 构建本地CSS路径
-						localCssPath := fmt.Sprintf("%s/style_%d.css", title, i)
-						fullCssPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localCssPath)
+						//localCssPath := fmt.Sprintf("%s/style_%d.css", title, i)
+						//fullCssPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localCssPath)
 
-						// 下载CSS文件
+						// 获取CSS文件的公共路径
+						fullCssPath, relativeCssPath := svc.getCommonResourcePath(href, "css")
+
+						// 下载CSS文件（如果不存在）
 						if _, err := svc.DownloadResourceFile(href, fullCssPath); err != nil {
 							zap.L().Error("下载CSS文件失败", zap.String("cssUrl", href), zap.Error(err))
 						} else {
 							// 更新href属性为本地路径
-							selection.SetAttr("href", localCssPath)
+							selection.SetAttr("href", relativeCssPath)
 							// 对于小型CSS和JS文件，可以考虑直接内联到HTML中，减少文件数量
 						}
 					}
@@ -467,15 +551,18 @@ func (svc *CrawlerImgService) GetWriteContent(html string, num int) (title strin
 					}
 					if strings.Contains(src, "http") {
 						// 构建本地JS路径
-						localJsPath := fmt.Sprintf("%s/script_%d.js", title, i)
-						fullJsPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localJsPath)
+						//localJsPath := fmt.Sprintf("%s/script_%d.js", title, i)
+						//fullJsPath := fmt.Sprintf("%s/%s", svc.ImgSavePath, localJsPath)
 
-						// 下载JS文件
+						// 获取JS文件的公共路径
+						fullJsPath, relativeJsPath := svc.getCommonResourcePath(src, "js")
+
+						// 下载JS文件（如果不存在）
 						if _, err := svc.DownloadResourceFile(src, fullJsPath); err != nil {
 							zap.L().Error("下载JS文件失败", zap.String("jsUrl", src), zap.Error(err))
 						} else {
 							// 更新src属性为本地路径
-							selection.SetAttr("src", localJsPath)
+							selection.SetAttr("src", relativeJsPath)
 						}
 					}
 				}
@@ -564,6 +651,7 @@ func (svc *CrawlerImgService) ExtractArticleContent(htmlContent string) string {
 	return contentBuilder.String()
 }
 
+// WriteWenAnContent 写入文案内容到文件中
 func (svc *CrawlerImgService) WriteWenAnContent(contents []types.CrawlResult) error {
 	// 一、所有文案保存到一个文件中
 	if err := utils.CreateFileIfNotExist(svc.TextContentFilePath); err != nil {
