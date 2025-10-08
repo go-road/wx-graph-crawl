@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/md5"
+	"encoding/csv"
 	"fmt"
 	"github.com/labstack/gommon/log"
 	"io"
@@ -760,8 +761,92 @@ func sanitizeFilenameV2(filename string) string {
 	return filename
 }
 
-// SaveFailedDownloadUrl 用于保存失败的下载地址到单独的文本文件
+// SaveFailedDownloadUrl 用于保存失败的下载地址到CSV文件
 func (svc *CrawlerImgService) SaveFailedDownloadUrl(url string, errMsg string) {
+	// 确定记录类型
+	recordType := "资源文件"
+	if strings.Contains(url, "mp.weixin.qq.com") || strings.Contains(errMsg, "抓取文章") {
+		recordType = "微信文章"
+	}
+
+	// 生成CSV文件名，使用日期作为标识
+	today := time.Now().Format("20060102")
+	csvFilename := fmt.Sprintf("failed_%s_%s.csv", recordType, today)
+	csvFilePath := filepath.Join(svc.FailedDownloadDir, csvFilename)
+
+	// 检查文件是否存在，不存在则创建并写入表头
+	fileExists := true
+	if _, err := os.Stat(csvFilePath); os.IsNotExist(err) {
+		fileExists = false
+	}
+
+	// 打开文件，使用追加模式
+	file, err := os.OpenFile(csvFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		zap.L().Error("打开失败下载记录文件失败", zap.String("filename", csvFilename), zap.Error(err))
+		return
+	}
+	defer file.Close()
+
+	// 创建CSV写入器
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	// 如果是新文件，写入表头
+	if !fileExists {
+		// CSV文件格式：包含三列数据 - 时间戳、URL、错误信息
+		header := []string{"时间戳", "URL", "错误信息"}
+		if err := writer.Write(header); err != nil {
+			zap.L().Error("写入CSV表头失败", zap.String("filename", csvFilename), zap.Error(err))
+			return
+		}
+	}
+
+	// 写入失败记录
+	record := []string{
+		time.Now().Format("2006-01-02 15:04:05"),
+		url,
+		errMsg,
+	}
+
+	if err := writer.Write(record); err != nil {
+		zap.L().Error("写入失败下载记录失败", zap.String("filename", csvFilename), zap.Error(err))
+	} else {
+		zap.L().Info("成功记录失败下载地址到CSV", zap.String("filename", csvFilename))
+	}
+}
+
+// 清理旧的失败记录文件，保留最近N天的记录
+func (svc *CrawlerImgService) CleanupOldFailedRecords(daysToKeep int) {
+	files, err := os.ReadDir(svc.FailedDownloadDir)
+	if err != nil {
+		zap.L().Error("读取失败记录目录失败", zap.Error(err))
+		return
+	}
+
+	cutoffTime := time.Now().AddDate(0, 0, -daysToKeep)
+
+	for _, file := range files {
+		if !file.IsDir() && strings.HasPrefix(file.Name(), "failed_") && strings.HasSuffix(file.Name(), ".csv") {
+			filePath := filepath.Join(svc.FailedDownloadDir, file.Name())
+			info, err := file.Info()
+			if err != nil {
+				continue
+			}
+
+			if info.ModTime().Before(cutoffTime) {
+				if err := os.Remove(filePath); err != nil {
+					zap.L().Error("删除旧失败记录文件失败", zap.String("filePath", filePath), zap.Error(err))
+				} else {
+					zap.L().Info("删除旧失败记录文件", zap.String("filePath", filePath))
+				}
+			}
+		}
+	}
+}
+
+// SaveFailedDownloadUrl 用于保存失败的下载地址到单独的文本文件
+func (svc *CrawlerImgService) SaveFailedDownloadUrlToTextFile(url string, errMsg string) {
 	// 生成唯一的文件名，使用时间戳和URL的一部分
 	urlHash := fmt.Sprintf("%x", md5.Sum([]byte(url)))
 	timestamp := time.Now().Format("20060102_150405")

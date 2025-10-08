@@ -6,3 +6,6 @@ https://mp.weixin.qq.com/mp/appmsgalbum?__biz=Mzg5MzgxMTIyOQ==&action=getalbum&a
 
 一安未来_面试专题集(66)
 https://mp.weixin.qq.com/mp/appmsgalbum?__biz=Mzg5MzgxMTIyOQ==&action=getalbum&album_id=2544478198781231106&scene=173&subscene=&sessionid=svr_61c1fe9a7f8&enterid=1759862015&from_msgid=2247501849&from_itemidx=1&count=3&nolastread=1#wechat_redirect
+
+分布式架构系列文章合集
+https://mp.weixin.qq.com/s/3C0d_tQHY6ZcdbvrtH_XOA
