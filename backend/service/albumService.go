@@ -3,9 +3,11 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pudongping/wx-graph-crawl/backend/types"
 	"github.com/pudongping/wx-graph-crawl/backend/utils"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -30,6 +32,7 @@ type CgiData struct {
 	Title        string         `json:"title"`
 	Desc         string         `json:"desc"`
 	NickName     string         `json:"nick_name"`
+	ArticleCount int            `json:"article_count"`
 }
 
 // AlbumResponse 表示后续循环专辑接口返回的完整的JSON响应结构
@@ -46,17 +49,18 @@ type AlbumResponse struct {
 
 // GetWechatAlbumAllArticleURLs 获取微信公众号专辑中所有文章的URL列表
 // albumHomeURL: 专辑首页地址，如 https://mp.weixin.qq.com/mp/appmsgalbum?action=getalbum&__biz=Mzg5MzgxMTIyOQ==&scene=1&album_id=2544487917101039623&count=3#wechat_redirect
-// 返回值: 所有文章的URL列表和可能的错误
-func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
+// 返回值: 所有文章的URL列表、文章详细信息列表和可能的错误
+func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, []types.AlbumArticleInfo, error) {
 	// 存储所有文章URL
 	var allArticleURLs []string
-	var uniqueUrls = make(map[string]struct{}) // 已去重的文章 URL
-	var lastMsgID string                       // 最后一个msgid，用于分页
-	continueFlag := "0"                        // 0表示没有更多数据
-	requestCount := 0                          // 请求计数
-	lastArticleCount := 0                      // 最后一次统计的文章数量
-	const maxRequests = 100                    // 最大请求次数，防止死循环
-	const requestInterval = 2 * time.Second    // 请求间隔，避免频率限制
+	var uniqueUrls = make(map[string]struct{})   // 已去重的文章 URL
+	var allArticleInfos []types.AlbumArticleInfo // 存储所有文章的详细信息
+	var lastMsgID string                         // 最后一个msgid，用于分页
+	continueFlag := "0"                          // 0表示没有更多数据
+	requestCount := 0                            // 请求计数
+	lastArticleCount := 0                        // 最后一次统计的文章数量
+	const maxRequests = 100                      // 最大请求次数，防止死循环
+	const requestInterval = 2 * time.Second      // 请求间隔，避免频率限制
 
 	// 创建HTTP客户端
 	httpClient := &http.Client{
@@ -66,7 +70,7 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 	zap.L().Info("开始获取专辑首页HTML", zap.String("url", albumHomeURL))
 	htmlContent, err := utils.HttpGetBody(httpClient, albumHomeURL)
 	if err != nil {
-		return nil, fmt.Errorf("获取专辑首页失败: %v", err)
+		return nil, nil, fmt.Errorf("获取专辑首页失败: %v", err)
 	}
 
 	// 解析HTML中的window.cgiData对象
@@ -75,7 +79,7 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 	dataRegex := regexp.MustCompile(`window\.cgiData\s*=\s*({[\s\S]*?});`)
 	matches := dataRegex.FindStringSubmatch(htmlContent)
 	if len(matches) < 2 {
-		return nil, fmt.Errorf("未能从HTML中提取window.cgiData对象")
+		return nil, nil, fmt.Errorf("未能从HTML中提取window.cgiData对象")
 	}
 	cgiStr := matches[1]
 	fmt.Println("window.cgiData对象内容:", cgiStr)
@@ -84,7 +88,7 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 	jsonStr, err := cleanJavaScriptObjectV4(cgiStr)
 	if err != nil {
 		zap.L().Error("清理JavaScript对象失败", zap.Error(err))
-		return nil, fmt.Errorf("清理JavaScript对象失败: %v", err)
+		return nil, nil, fmt.Errorf("清理JavaScript对象失败: %v", err)
 	}
 	zap.L().Info("清理后的JSON字符串", zap.String("content", jsonStr))
 
@@ -92,13 +96,15 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 	var indexResp CgiData
 	if err := json.Unmarshal([]byte(jsonStr), &indexResp); err != nil {
 		fmt.Println("解析window.cgiData对象失败:", err)
-		return nil, fmt.Errorf("解析window.cgiData对象失败: %v", err)
+		return nil, nil, fmt.Errorf("解析window.cgiData对象失败: %v", err)
 	}
 	zap.L().Info("解析到专辑信息",
 		zap.String("title", indexResp.Title),
 		zap.String("desc", indexResp.Desc),
 		zap.String("nick_name", indexResp.NickName),
-		zap.Int("article_count", len(indexResp.ArticleList)),
+		//zap.Int("article_count", len(indexResp.ArticleList)),
+		// 文章总数量
+		zap.Int("article_count", indexResp.ArticleCount),
 	)
 
 	// 处理初始文章列表
@@ -108,6 +114,14 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 		if _, exists := uniqueUrls[fixedURL]; !exists {
 			uniqueUrls[fixedURL] = struct{}{}
 			allArticleURLs = append(allArticleURLs, fixedURL)
+			// 文章详细信息
+			articleInfo := types.AlbumArticleInfo{
+				Index:  len(allArticleInfos) + 1,
+				Title:  article.Title,
+				URL:    fixedURL,
+				Status: "未下载", // 初始状态
+			}
+			allArticleInfos = append(allArticleInfos, articleInfo)
 		}
 		// 更新最后一个msgid
 		lastMsgID = article.MsgID
@@ -117,7 +131,7 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 	params, err := parseAlbumHomeURL(albumHomeURL) // map结构中包含__biz, album_id
 	if err != nil {
 		//return allArticleURLs, errors.Wrap(err, "解析首页URL参数失败")
-		return allArticleURLs, fmt.Errorf("解析首页URL参数失败: %v", err)
+		return allArticleURLs, allArticleInfos, fmt.Errorf("解析首页URL参数失败: %v", err)
 	}
 
 	// 检查是否需要继续请求（continue_flag为1表示还有更多文章）
@@ -139,14 +153,14 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 		response, err := utils.HttpGetBody(httpClient, apiURL)
 		if err != nil {
 			zap.L().Error("请求专辑API失败，停止获取", zap.Error(err))
-			return allArticleURLs, errors.Wrap(err, "请求专辑文章列表失败")
+			return allArticleURLs, allArticleInfos, errors.Wrap(err, "请求专辑文章列表失败")
 		}
 
 		// 解析后续请求的JSON响应
 		var albumResp AlbumResponse
 		if err := json.Unmarshal([]byte(response), &albumResp); err != nil {
 			zap.L().Error("解析专辑API响应失败", zap.Error(err))
-			return allArticleURLs, errors.Wrap(err, "解析专辑文章列表响应失败")
+			return allArticleURLs, allArticleInfos, errors.Wrap(err, "解析专辑文章列表响应失败")
 		}
 
 		// 发送请求并解析响应（另一种方式）
@@ -165,7 +179,7 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 		// 检查响应是否成功
 		if albumResp.BaseResp.Ret != 0 {
 			zap.L().Error("专辑API返回错误", zap.Int("ret", albumResp.BaseResp.Ret))
-			return allArticleURLs, errors.Errorf("请求专辑文章列表返回错误码: %d", albumResp.BaseResp.Ret)
+			return allArticleURLs, allArticleInfos, errors.Errorf("请求专辑文章列表返回错误码: %d", albumResp.BaseResp.Ret)
 		}
 
 		// 提取文章URL
@@ -185,6 +199,15 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 			if _, exists := uniqueUrls[fixedURL]; !exists {
 				uniqueUrls[fixedURL] = struct{}{}
 				allArticleURLs = append(allArticleURLs, fixedURL)
+				// 文章详细信息
+				articleInfo := types.AlbumArticleInfo{
+					Index:  len(allArticleInfos) + 1,
+					Title:  article.Title,
+					URL:    fixedURL,
+					Status: "未下载", // 初始状态
+				}
+				allArticleInfos = append(allArticleInfos, articleInfo)
+
 				zap.L().Info("获取到文章", zap.String("title", article.Title), zap.String("url", fixedURL))
 				newArticleFound = true
 			}
@@ -223,7 +246,45 @@ func GetWechatAlbumAllArticleURLs(albumHomeURL string) ([]string, error) {
 	}
 
 	zap.L().Info("成功获取所有专辑文章URL", zap.Int("urls_count", len(allArticleURLs)), zap.Int("request_count", requestCount))
-	return allArticleURLs, nil
+
+	// 4. 导出文章列表到CSV文件
+	if len(allArticleInfos) > 0 {
+		// 文章总数量
+		articleTotal := len(allArticleInfos)
+		zap.L().Info("文章总数", zap.Int("total", articleTotal))
+
+		// 生成CSV文件名：NickName_Title.csv
+		csvFileName := fmt.Sprintf("%s_%s.csv", indexResp.NickName, sanitizeFilename(indexResp.Title))
+
+		// 创建CSV内容
+		var csvContent strings.Builder
+		// 写入CSV标题行
+		csvContent.WriteString("序号,标题,地址\n")
+
+		// 写入每篇文章的信息
+		for _, article := range allArticleInfos {
+			// 处理标题中的逗号和引号（CSV格式要求）
+			index := articleTotal - article.Index + 1 // 倒序编号
+			title := strings.ReplaceAll(article.Title, "\"", "\"\"")
+			url := strings.ReplaceAll(article.URL, "\"", "\"\"")
+			csvContent.WriteString(fmt.Sprintf("%d,\"%s\",\"%s\"\n", index, title, url))
+		}
+
+		// 保存CSV文件到downloads目录
+		downloadsDir := utils.GetDefaultDownloadsDir()
+		csvFilePath := filepath.Join(downloadsDir, csvFileName)
+
+		// 使用utils.SaveFile函数保存文件
+		if err := utils.SaveFile(csvContent.String(), csvFilePath); err != nil {
+			fmt.Printf("保存CSV文件失败: %s,%v\n", csvFilePath, err)
+			zap.L().Error("保存CSV文件失败", zap.String("filePath", csvFilePath), zap.Error(err))
+		} else {
+			fmt.Printf("成功保存文章列表到CSV文件: %s\n", csvFilePath)
+			zap.L().Info("成功保存文章列表到CSV文件", zap.String("filePath", csvFilePath))
+		}
+	}
+
+	return allArticleURLs, allArticleInfos, nil
 }
 
 // 完全重构的cleanJavaScriptObject函数，更可靠地处理JavaScript对象

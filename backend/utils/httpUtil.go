@@ -29,12 +29,16 @@ func HttpGet(client *http.Client, url string) (*http.Response, error) {
 	return res, nil
 }
 
+// HttpGetBody 发送GET请求并返回响应体内容
 func HttpGetBody(client *http.Client, url string) (string, error) {
 	resp, err := HttpGet(client, url)
+	if err != nil {
+		return "", fmt.Errorf("HTTP请求失败: %v", err)
+	}
 	defer resp.Body.Close()
 
-	if err != nil {
-		return "", fmt.Errorf("获取响应体失败: %v", err)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("HTTP状态码错误: %d", resp.StatusCode)
 	}
 
 	bodyByte, err := io.ReadAll(resp.Body)

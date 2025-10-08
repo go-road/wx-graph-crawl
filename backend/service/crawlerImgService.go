@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/labstack/gommon/log"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -745,6 +746,20 @@ func sanitizeFilename(filename string) string {
 	return cleanName
 }
 
+// 辅助函数：清理文件名中的非法字符
+func sanitizeFilenameV2(filename string) string {
+	// 移除Windows文件名中的非法字符
+	filename = strings.Map(func(r rune) rune {
+		switch r {
+		case '<', '>', ':', '"', '/', '\\', '|', '?', '*':
+			return '_'
+		default:
+			return r
+		}
+	}, filename)
+	return filename
+}
+
 // SaveFailedDownloadUrl 用于保存失败的下载地址到单独的文本文件
 func (svc *CrawlerImgService) SaveFailedDownloadUrl(url string, errMsg string) {
 	// 生成唯一的文件名，使用时间戳和URL的一部分
@@ -777,4 +792,67 @@ func (svc *CrawlerImgService) SaveFailedDownloadUrl(url string, errMsg string) {
 	} else {
 		zap.L().Info("成功记录失败下载地址", zap.String("filename", filename))
 	}
+}
+
+// 自动化重试：自动收集所有失败的文章URL并批量重试
+// 从失败记录目录中读取所有文章URL并尝试重新抓取（备用）
+func (svc *CrawlerImgService) RetryFailedArticles() error {
+	// 读取失败记录目录中的所有文件
+	files, err := ioutil.ReadDir(svc.FailedDownloadDir)
+	if err != nil {
+		return errors.Wrap(err, "读取失败记录目录失败")
+	}
+
+	var articleUrls []string
+
+	// 遍历所有文件，提取文章URL
+	for _, file := range files {
+		if !file.IsDir() && strings.HasSuffix(file.Name(), ".txt") {
+			content, err := ioutil.ReadFile(filepath.Join(svc.FailedDownloadDir, file.Name()))
+			if err != nil {
+				zap.L().Error("读取失败记录文件失败", zap.String("filename", file.Name()), zap.Error(err))
+				continue
+			}
+
+			// 查找文章URL
+			articleUrlMatch := regexp.MustCompile(`Article URL: (.+)`).FindStringSubmatch(string(content))
+			if len(articleUrlMatch) > 1 {
+				articleUrls = append(articleUrls, articleUrlMatch[1])
+			} else {
+				// 如果没有Article URL字段，可能是直接的文章失败记录，尝试提取URL
+				urlMatch := regexp.MustCompile(`URL: (.+)`).FindStringSubmatch(string(content))
+				if len(urlMatch) > 1 {
+					articleUrls = append(articleUrls, urlMatch[1])
+				}
+			}
+		}
+	}
+
+	// 去重
+	urlMap := make(map[string]bool)
+	var uniqueUrls []string
+	for _, url := range articleUrls {
+		if !urlMap[url] {
+			urlMap[url] = true
+			uniqueUrls = append(uniqueUrls, url)
+		}
+	}
+
+	if len(uniqueUrls) == 0 {
+		zap.L().Info("没有找到需要重试的失败文章")
+		return nil
+	}
+
+	// 创建一个新的服务实例进行重试
+	retrySvc := NewCrawlerImgService(
+		uniqueUrls,
+		svc.HttpClientTimeout,
+		svc.ImgSavePath,
+		svc.TextContentFilePath,
+		svc.TextContentFileDir,
+	)
+
+	zap.L().Info("开始重试失败的文章", zap.Int("count", len(uniqueUrls)))
+	_, err = retrySvc.RunSpiderImg()
+	return err
 }
